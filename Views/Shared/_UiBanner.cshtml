@@ -1,0 +1,24 @@
+@model Online_Mobile_Recharge.Models.ViewModels.UiBannerViewModel
+
+<div class="ui-banner">
+    <div class="ui-banner-body">
+        <div class="ui-banner-copy">
+            <div class="ui-banner-title">
+                <span class="ui-banner-icon"><i class="@Model.IconClass"></i></span>
+                <h4 class="display-font mb-0">@Model.Title</h4>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+            {
+                <p class="text-muted mb-0">@Model.Subtitle</p>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CtaText) && !string.IsNullOrWhiteSpace(Model.CtaUrl))
+        {
+            <a href="@Model.CtaUrl" class="btn btn-brand ui-banner-cta">@Model.CtaText</a>
+        }
+    </div>
+
+    <img src="~/images/ui-divider.svg" class="ui-banner-art" alt="" aria-hidden="true" />
+</div>
+

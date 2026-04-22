@@ -14,7 +14,10 @@
     public enum PaymentMethod
     {
         Prepaid,
-        Postpaid
+        Postpaid,
+        BankTransferQr,
+        ZaloPaySandbox,
+        PayPalSandbox
     }
     public enum DndMode
     {

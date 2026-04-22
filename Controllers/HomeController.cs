@@ -101,9 +101,9 @@ namespace Online_Mobile_Recharge.Controllers
                     {
                         ProductId = x.Id,
                         OriginalPrice = x.Price,
-                        EffectivePrice = ProductSaleCalculator.GetEffectivePrice(x.Price, sale),
+                        EffectivePrice = ProductSaleCalculator.GetEffectivePrice(x.Price, sale, now),
                         HasSale = ProductSaleCalculator.IsActive(sale, now),
-                        SaleBadgeText = ProductSaleCalculator.GetBadgeText(sale)
+                        SaleBadgeText = ProductSaleCalculator.GetBadgeText(sale, now)
                     };
                 });
 

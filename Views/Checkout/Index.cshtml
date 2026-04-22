@@ -68,21 +68,7 @@
                         <span asp-validation-for="Type" class="text-danger"></span>
                     </div>
 
-                    <div id="postpaidExtraFields" class="d-none">
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <label asp-for="PostpaidNationalId" class="form-label">National ID / CCCD</label>
-                                <input asp-for="PostpaidNationalId" class="form-control" inputmode="numeric" />
-                                <span asp-validation-for="PostpaidNationalId" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="PostpaidBillingAddress" class="form-label">Billing address</label>
-                                <input asp-for="PostpaidBillingAddress" class="form-control" />
-                                <span asp-validation-for="PostpaidBillingAddress" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                    </div>
+                    <div id="postpaidExtraFields" class="d-none"></div>
 
                     @{
                         var manualPhoneValue = (Model.Phone ?? string.Empty).Trim();
@@ -111,6 +97,15 @@
                                 <span asp-validation-for="Phone" class="text-danger"></span>
                             </div>
                         </div>
+                    </div>
+
+                    <div id="prepaidPaymentMethodWrap">
+                        <label asp-for="PrepaidPaymentMethod" class="form-label">Payment method</label>
+                        <select asp-for="PrepaidPaymentMethod" class="form-select" id="prepaidPaymentMethod">
+                            <option value="card">Card (saved / manual)</option>
+                            <option value="paypal">PayPal (Sandbox)</option>
+                        </select>
+                        <div class="small text-muted mt-1">PayPal runs in sandbox mode for testing (no real money).</div>
                     </div>
 
                     <div id="cardSection" class="d-grid gap-3">
@@ -209,6 +204,8 @@
             const postpaidNote = document.getElementById("postpaidNote");
             const postpaidExtraFields = document.getElementById("postpaidExtraFields");
             const checkoutSubmitButton = document.getElementById("checkoutSubmitButton");
+            const prepaidPaymentMethodWrap = document.getElementById("prepaidPaymentMethodWrap");
+            const prepaidPaymentMethod = document.getElementById("prepaidPaymentMethod");
             const cardNumberInput = document.getElementById("CardNumber");
             const expiryInput = document.getElementById("Expiry");
             const cvvInput = document.getElementById("CVV");
@@ -220,17 +217,23 @@
 
             function togglePaymentMode() {
                 const isPostpaid = typeSelect.value === "postpaid";
+                const prepaidMethod = prepaidPaymentMethod ? prepaidPaymentMethod.value : "card";
+                const usingCard = prepaidMethod === "card";
 
-                cardSection.classList.toggle("d-none", isPostpaid);
+                cardSection.classList.toggle("d-none", isPostpaid || !usingCard);
                 postpaidNote.classList.toggle("d-none", !isPostpaid);
                 if (postpaidExtraFields) {
                     postpaidExtraFields.classList.toggle("d-none", !isPostpaid);
                 }
                 checkoutSubmitButton.textContent = "Review order";
 
+                if (prepaidPaymentMethodWrap) {
+                    prepaidPaymentMethodWrap.classList.toggle("d-none", isPostpaid);
+                }
+
                 [cardNumberInput, expiryInput, cvvInput, savedCardSelect, cardModeSaved, cardModeManual].forEach(function (input) {
                     if (input) {
-                        input.disabled = isPostpaid;
+                        input.disabled = isPostpaid || !usingCard;
                     }
                 });
 
@@ -241,6 +244,25 @@
 
             function toggleCardMode() {
                 if (!savedCardSelect || !manualCardFields) {
+                    return;
+                }
+
+                if (cardSection && cardSection.classList.contains("d-none")) {
+                    if (savedCardSelect) {
+                        savedCardSelect.disabled = true;
+                    }
+
+                    [cardNumberInput, expiryInput, cvvInput].forEach(function (input) {
+                        if (input) {
+                            input.disabled = true;
+                        }
+                    });
+
+                    if (savedCardPicker) {
+                        savedCardPicker.classList.add("d-none");
+                    }
+
+                    manualCardFields.classList.add("d-none");
                     return;
                 }
 
@@ -264,6 +286,9 @@
             }
 
             typeSelect.addEventListener("change", togglePaymentMode);
+            if (prepaidPaymentMethod) {
+                prepaidPaymentMethod.addEventListener("change", togglePaymentMode);
+            }
 
             function syncPhoneFromSelector() {
                 if (!phoneSelect || !phoneHiddenInput) {
@@ -296,10 +321,13 @@
             if (checkoutForm) {
                 checkoutForm.addEventListener("submit", function (event) {
                     const paymentType = typeSelect.value === "postpaid" ? "postpaid" : "prepaid";
-                    const targetPhone = (phoneHiddenInput && phoneHiddenInput.value) ? phoneHiddenInput.value : "an empty phone number";
+                    const rawPhone = (phoneHiddenInput && phoneHiddenInput.value) ? phoneHiddenInput.value : "";
+                    const maskedPhone = rawPhone && rawPhone.length >= 6
+                        ? rawPhone.substring(0, 3) + "***" + rawPhone.substring(rawPhone.length - 3)
+                        : "your phone number";
                     const message = typeSelect.value === "postpaid"
-                        ? "Are you sure you want to create a postpaid bill for " + targetPhone + "?"
-                        : "Are you sure you want to confirm this " + paymentType + " payment for " + targetPhone + "?";
+                        ? "Are you sure you want to create a postpaid bill for " + maskedPhone + "?"
+                        : "Are you sure you want to confirm this " + paymentType + " payment for " + maskedPhone + "?";
 
                     if (checkoutForm.dataset.confirmed === "true") {
                         checkoutForm.dataset.confirmed = "false";

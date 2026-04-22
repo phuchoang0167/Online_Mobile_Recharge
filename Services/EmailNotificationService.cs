@@ -157,6 +157,24 @@ public class EmailNotificationService
         return await SendAsync(user.Email, user.Name, $"Postpaid reminder #{transaction.Id}", body);
     }
 
+    public async Task<bool> SendProductChangeNoticeAsync(User user, string oldProductName, string newProductName, string changeSummary)
+    {
+        var body = $"""
+            <div style="font-family:Segoe UI,Arial,sans-serif;line-height:1.6;color:#0f172a;">
+                <h2 style="margin-bottom:12px;">Package update notice</h2>
+                <p>Hello {WebUtility.HtmlEncode(user.Name)}, we updated one of the packages on our platform.</p>
+                <p><strong>Old package:</strong> {WebUtility.HtmlEncode(oldProductName)}</p>
+                <p><strong>New package:</strong> {WebUtility.HtmlEncode(newProductName)}</p>
+                <div style="margin-top:12px;padding:14px 16px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0;">
+                    {WebUtility.HtmlEncode(changeSummary).Replace(Environment.NewLine, "<br />")}
+                </div>
+                <p style="margin-top:24px;">If you are currently using this package, your existing benefits remain until expiry (when applicable).</p>
+            </div>
+            """;
+
+        return await SendAsync(user.Email, user.Name, "Package updated", body);
+    }
+
     private async Task<bool> SendAsync(
         string toEmail,
         string toName,

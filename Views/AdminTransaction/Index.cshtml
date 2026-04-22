@@ -154,7 +154,6 @@
                                              <th>Phone</th>
                                              <th>Product</th>
                                              <th>Amount</th>
-                                             <th>CCCD</th>
                                              <th>Status</th>
                                              <th>Due</th>
                                              <th>Date</th>
@@ -175,7 +174,6 @@
                                                  <td>@transaction.PhoneNumber</td>
                                                  <td>@(transaction.Product?.Name ?? "-")</td>
                                                  <td>@transaction.Amount.ToString("N0") VND</td>
-                                                 <td>@(string.IsNullOrWhiteSpace(transaction.PostpaidNationalId) ? "-" : transaction.PostpaidNationalId)</td>
                                                  <td>
                                                      @if (transaction.Status == TransactionStatus.Success)
                                                      {

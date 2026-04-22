@@ -60,18 +60,6 @@
                         <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="NationalId" class="form-label">National ID / CCCD</label>
-                        <input asp-for="NationalId" class="form-control" inputmode="numeric" />
-                        <span asp-validation-for="NationalId" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="BillingAddress" class="form-label">Billing address</label>
-                        <input asp-for="BillingAddress" class="form-control" />
-                        <span asp-validation-for="BillingAddress" class="text-danger small"></span>
-                    </div>
-
                     <div class="mb-4">
                         <label asp-for="CreatedAt" class="form-label">Created at</label>
                         <input value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" class="form-control locked-field" disabled />

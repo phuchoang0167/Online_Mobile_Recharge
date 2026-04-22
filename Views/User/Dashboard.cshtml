@@ -116,6 +116,15 @@ else if (dueSoonBillsCount > 0)
 
 </div>
 
+@await Html.PartialAsync("_UiBanner", new Online_Mobile_Recharge.Models.ViewModels.UiBannerViewModel
+{
+    Title = "Quick actions",
+    Subtitle = "Jump to bills, transactions, and account settings without scrolling too much.",
+    IconClass = "bi bi-lightning-charge",
+    CtaText = "Open transactions",
+    CtaUrl = Url.Action("Index", "UserTransaction")
+})
+
 <div class="row g-4">
 
     <div class="col-lg-12">

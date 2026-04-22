@@ -3,8 +3,6 @@
 @{
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
     ViewData["Title"] = "My Profile";
-    var nationalIdDisplay = string.IsNullOrWhiteSpace(Model.NationalId) ? "-" : Model.NationalId;
-    var billingAddressDisplay = string.IsNullOrWhiteSpace(Model.BillingAddress) ? "-" : Model.BillingAddress;
 }
 
 <div class="content-panel">
@@ -48,14 +46,6 @@
                     <div class="col-md-6">
                         <label class="form-label text-muted">Email</label>
                         <input value="@Model.Email" class="form-control locked-field" disabled />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted">National ID / CCCD</label>
-                        <input value="@nationalIdDisplay" class="form-control locked-field" disabled />
-                    </div>
-                    <div class="col-md-12">
-                        <label class="form-label text-muted">Billing address</label>
-                        <input value="@billingAddressDisplay" class="form-control locked-field" disabled />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label text-muted">Created at</label>

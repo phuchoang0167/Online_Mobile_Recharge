@@ -3,70 +3,78 @@
 @{
     ViewData["Title"] = "Review Order";
     var isPostpaid = string.Equals(Model.Checkout.Type, "postpaid", StringComparison.OrdinalIgnoreCase);
+    var prepaidMethod = (Model.Checkout.PrepaidPaymentMethod ?? "card").Trim().ToLowerInvariant();
+    var prepaidMethodLabel = prepaidMethod switch
+    {
+        "paypal" => "PayPal (Sandbox)",
+        _ => "Card (saved / manual)"
+    };
 }
 
 <div class="container mt-5">
-    <div class="row g-4 justify-content-center">
-        <div class="col-lg-8">
-            <div class="content-panel">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="content-panel h-100">
                 <span class="badge text-bg-dark mb-3">Review</span>
-                <h3 class="display-font mb-2">Confirm before @(isPostpaid ? "creating the bill" : "payment")</h3>
-                <p class="text-muted mb-4">Please double-check the details below. This step is required before we process anything.</p>
 
-                @if (TempData["ErrorMessage"] != null)
-                {
-                    <div class="alert alert-danger mb-3">@TempData["ErrorMessage"]</div>
-                }
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="ui-icon-bubble">
+                        <i class="bi @(isPostpaid ? "bi-receipt-cutoff" : "bi-bag-check")"></i>
+                    </span>
+                    <div>
+                        <h3 class="display-font mb-0">@Model.Checkout.ProductName</h3>
+                        <div class="text-muted small">Confirm before @(isPostpaid ? "creating the bill" : "payment")</div>
+                    </div>
+                </div>
 
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
-                }
+               
 
                 <div class="table-card mb-4">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Product</span>
-                        <strong>@Model.Checkout.ProductName</strong>
+                        <span class="text-muted">Total amount</span>
+                        @if (Model.Checkout.HasSale)
+                        {
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="badge text-bg-danger align-self-end mb-1">Sale @Model.Checkout.SaleBadgeText</span>
+                                <span class="text-muted text-decoration-line-through small">@Model.Checkout.OriginalPrice.ToString("N0") VND</span>
+                                <strong class="fs-4 text-danger">@Model.Checkout.Price.ToString("N0") VND</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <strong class="fs-4 text-danger">@Model.Checkout.Price.ToString("N0") VND</strong>
+                        }
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mt-2">
+                </div>
+
+                <div class="table-card mb-0">
+                    <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted">Phone</span>
-                        <strong>@Model.Checkout.Phone</strong>
+                        <strong>@(string.IsNullOrWhiteSpace(Model.Checkout.Phone) ? "—" : $"{Model.Checkout.Phone.Substring(0, 3)}***{Model.Checkout.Phone.Substring(Math.Max(0, Model.Checkout.Phone.Length - 3))}")</strong>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <span class="text-muted">Type</span>
                         <strong class="text-capitalize">@Model.Checkout.Type</strong>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mt-2">
-                        <span class="text-muted">Amount</span>
-                        <strong class="text-danger">@Model.Checkout.Price.ToString("N0") VND</strong>
-                    </div>
-                </div>
-
-                @if (!isPostpaid)
-                {
-                    <div class="table-card mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Card</span>
-                            <strong>@(string.IsNullOrWhiteSpace(Model.MaskedCardNumber) ? "—" : Model.MaskedCardNumber)</strong>
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(Model.CardLabel))
-                        {
-                            <div class="text-muted small mt-2">@Model.CardLabel</div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="table-card mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted">National ID / CCCD</span>
-                            <strong>@(string.IsNullOrWhiteSpace(Model.Checkout.PostpaidNationalId) ? "—" : Model.Checkout.PostpaidNationalId)</strong>
-                        </div>
+                    @if (!isPostpaid)
+                    {
                         <div class="d-flex justify-content-between align-items-center mt-2">
-                            <span class="text-muted">Billing address</span>
-                            <strong>@(string.IsNullOrWhiteSpace(Model.Checkout.PostpaidBillingAddress) ? "—" : Model.Checkout.PostpaidBillingAddress)</strong>
+                            <span class="text-muted">Method</span>
+                            <strong>@prepaidMethodLabel</strong>
                         </div>
-                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="content-panel">
+                <h3 class="display-font mb-2">Confirm</h3>
+                <p class="text-muted mb-4">This is the final check. Nothing will be processed until you confirm.</p>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger mb-3">@TempData["ErrorMessage"]</div>
                 }
 
                 <form asp-action="Confirm" method="post" class="d-grid gap-3">
@@ -77,6 +85,34 @@
                     {
                         <div class="alert alert-danger mb-0">
                             @Html.ValidationSummary(false)
+                        </div>
+                    }
+
+                    @if (!isPostpaid && prepaidMethod == "card")
+                    {
+                        <div class="table-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Card</span>
+                                <strong>@(string.IsNullOrWhiteSpace(Model.MaskedCardNumber) ? "—" : Model.MaskedCardNumber)</strong>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.CardLabel))
+                            {
+                                <div class="text-muted small mt-2">@Model.CardLabel</div>
+                            }
+                        </div>
+                    }
+
+                    @if (!isPostpaid && prepaidMethod == "paypal")
+                    {
+                        <div class="table-card">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-paypal"></i>
+                                    <strong>PayPal Sandbox</strong>
+                                </div>
+                                <span class="badge text-bg-secondary">Test mode</span>
+                            </div>
+                            <div class="small text-muted mt-2">You will be redirected to PayPal to approve the payment.</div>
                         </div>
                     }
 
@@ -106,7 +142,7 @@
                     <div class="d-flex gap-2 justify-content-between flex-wrap">
                         <a class="btn btn-outline-secondary" asp-action="Index" asp-route-productId="@Model.Checkout.ProductId">Edit details</a>
                         <button type="submit" class="btn btn-brand btn-lg" id="confirmButton">
-                            @(isPostpaid ? "Create postpaid bill" : "Pay now")
+                            @(isPostpaid ? "Create postpaid bill" : "Continue to payment")
                         </button>
                     </div>
                 </form>

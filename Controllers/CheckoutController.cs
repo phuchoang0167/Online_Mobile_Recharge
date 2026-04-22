@@ -61,8 +61,8 @@ public class CheckoutController : Controller
             model.ProductName = product.Name;
             model.OriginalPrice = product.Price;
             model.HasSale = ProductSaleCalculator.IsActive(activeSale, now);
-            model.Price = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale);
-            model.SaleBadgeText = ProductSaleCalculator.GetBadgeText(activeSale);
+            model.Price = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale, now);
+            model.SaleBadgeText = ProductSaleCalculator.GetBadgeText(activeSale, now);
         }
 
         if (user != null)
@@ -72,12 +72,12 @@ public class CheckoutController : Controller
 
             if (string.IsNullOrWhiteSpace(model.PostpaidNationalId))
             {
-                model.PostpaidNationalId = user.NationalId;
+                model.PostpaidNationalId = null;
             }
 
             if (string.IsNullOrWhiteSpace(model.PostpaidBillingAddress))
             {
-                model.PostpaidBillingAddress = user.BillingAddress;
+                model.PostpaidBillingAddress = null;
             }
 
             var options = new List<string>();
@@ -159,6 +159,7 @@ public class CheckoutController : Controller
         public int ProductId { get; set; }
         public string Phone { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
+        public string PrepaidPaymentMethod { get; set; } = "card";
 
         public string? PostpaidNationalId { get; set; }
         public string? PostpaidBillingAddress { get; set; }
@@ -243,6 +244,7 @@ public class CheckoutController : Controller
         var userId = HttpContext.Session.GetInt32("UserId")!.Value;
         model.Type = (model.Type ?? string.Empty).Trim().ToLowerInvariant();
         model.Phone = (model.Phone ?? string.Empty).Trim();
+        model.PrepaidPaymentMethod = (model.PrepaidPaymentMethod ?? string.Empty).Trim().ToLowerInvariant();
 
         string? cardNumber = model.CardNumber;
         string? cvv = model.CVV;
@@ -258,22 +260,8 @@ public class CheckoutController : Controller
             ModelState.Remove(nameof(model.PostpaidAgreeToTerms));
             ModelState.Remove(nameof(model.PostpaidAgreeToContract));
 
-            model.PostpaidNationalId = (model.PostpaidNationalId ?? string.Empty).Trim();
-            model.PostpaidBillingAddress = (model.PostpaidBillingAddress ?? string.Empty).Trim();
-
-            if (string.IsNullOrWhiteSpace(model.PostpaidNationalId))
-            {
-                ModelState.AddModelError(nameof(model.PostpaidNationalId), "Please enter your National ID / CCCD.");
-            }
-            else if (!Regex.IsMatch(model.PostpaidNationalId, @"^\d{9}(\d{3})?$"))
-            {
-                ModelState.AddModelError(nameof(model.PostpaidNationalId), "National ID / CCCD must be 9 or 12 digits.");
-            }
-
-            if (string.IsNullOrWhiteSpace(model.PostpaidBillingAddress))
-            {
-                ModelState.AddModelError(nameof(model.PostpaidBillingAddress), "Please enter your billing address.");
-            }
+            ModelState.Remove(nameof(model.PostpaidNationalId));
+            ModelState.Remove(nameof(model.PostpaidBillingAddress));
         }
         else if (model.Type == "prepaid")
         {
@@ -282,6 +270,17 @@ public class CheckoutController : Controller
             ModelState.Remove(nameof(model.PostpaidAgreeToTerms));
             ModelState.Remove(nameof(model.PostpaidAgreeToContract));
 
+            var prepaidMethod = string.IsNullOrWhiteSpace(model.PrepaidPaymentMethod) ? "card" : model.PrepaidPaymentMethod;
+            if (prepaidMethod != "card")
+            {
+                ModelState.Remove(nameof(model.CardNumber));
+                ModelState.Remove(nameof(model.CVV));
+                ModelState.Remove(nameof(model.Expiry));
+                ModelState.Remove(nameof(model.CardInputMode));
+                ModelState.Remove(nameof(model.SavedCardId));
+            }
+            else
+            {
             model.CardInputMode = (model.CardInputMode ?? string.Empty).Trim().ToLowerInvariant();
 
             if (model.CardInputMode == "saved")
@@ -326,6 +325,7 @@ public class CheckoutController : Controller
             {
                 ModelState.AddModelError(nameof(model.CardInputMode), "Invalid card input mode.");
             }
+            }
         }
         else
         {
@@ -343,7 +343,7 @@ public class CheckoutController : Controller
         string? maskedCard = null;
         string? cardLabel = null;
 
-        if (model.Type == "prepaid")
+        if (model.Type == "prepaid" && string.Equals(model.PrepaidPaymentMethod, "card", StringComparison.OrdinalIgnoreCase))
         {
             if (model.CardInputMode == "saved" && model.SavedCardId.HasValue)
             {
@@ -363,11 +363,12 @@ public class CheckoutController : Controller
             ProductId = model.ProductId,
             Phone = model.Phone,
             Type = model.Type,
-            PostpaidNationalId = string.IsNullOrWhiteSpace(model.PostpaidNationalId) ? null : model.PostpaidNationalId.Trim(),
-            PostpaidBillingAddress = string.IsNullOrWhiteSpace(model.PostpaidBillingAddress) ? null : model.PostpaidBillingAddress.Trim(),
-            CardNumber = model.Type == "prepaid" ? cardNumber : null,
-            CVV = model.Type == "prepaid" ? cvv : null,
-            Expiry = model.Type == "prepaid" ? expiry : null,
+            PrepaidPaymentMethod = string.IsNullOrWhiteSpace(model.PrepaidPaymentMethod) ? "card" : model.PrepaidPaymentMethod,
+            PostpaidNationalId = null,
+            PostpaidBillingAddress = null,
+            CardNumber = (model.Type == "prepaid" && string.Equals(model.PrepaidPaymentMethod, "card", StringComparison.OrdinalIgnoreCase)) ? cardNumber : null,
+            CVV = (model.Type == "prepaid" && string.Equals(model.PrepaidPaymentMethod, "card", StringComparison.OrdinalIgnoreCase)) ? cvv : null,
+            Expiry = (model.Type == "prepaid" && string.Equals(model.PrepaidPaymentMethod, "card", StringComparison.OrdinalIgnoreCase)) ? expiry : null,
             MaskedCardNumber = maskedCard,
             CardLabel = cardLabel
         };
@@ -415,8 +416,7 @@ public class CheckoutController : Controller
                 ProductId = draft.ProductId,
                 Phone = draft.Phone,
                 Type = draft.Type,
-                PostpaidNationalId = draft.PostpaidNationalId,
-                PostpaidBillingAddress = draft.PostpaidBillingAddress
+                PrepaidPaymentMethod = draft.PrepaidPaymentMethod
             };
 
             LoadData(checkoutModel, userId);
@@ -437,6 +437,7 @@ public class CheckoutController : Controller
             userId,
             draft.Phone,
             draft.Type,
+            draft.PrepaidPaymentMethod,
             draft.PostpaidNationalId,
             draft.PostpaidBillingAddress,
             model.PostpaidAgreeToTerms,
@@ -455,8 +456,7 @@ public class CheckoutController : Controller
                 ProductId = draft.ProductId,
                 Phone = draft.Phone,
                 Type = draft.Type,
-                PostpaidNationalId = draft.PostpaidNationalId,
-                PostpaidBillingAddress = draft.PostpaidBillingAddress
+                PrepaidPaymentMethod = draft.PrepaidPaymentMethod
             };
 
             LoadData(checkoutModel, userId);
@@ -472,23 +472,17 @@ public class CheckoutController : Controller
 
         RemoveDraftFromSession(model.Token);
 
+        if (result.Transaction.Type == TransactionType.Prepaid &&
+            result.Transaction.Status == TransactionStatus.Pending &&
+            result.Transaction.PaymentMethod == PaymentMethod.PayPalSandbox)
+        {
+            return RedirectToAction("PayPal", "Payment", new { id = result.Transaction.Id });
+        }
+
         var user = _context.Users.FirstOrDefault(x => x.Id == userId);
         var product = _context.Products.FirstOrDefault(x => x.Id == draft.ProductId);
 
-        if (user != null &&
-            user.Role == "User" &&
-            !user.IsDeleted &&
-            string.Equals(draft.Type, "postpaid", StringComparison.OrdinalIgnoreCase))
-        {
-            var nationalId = string.IsNullOrWhiteSpace(draft.PostpaidNationalId) ? null : draft.PostpaidNationalId.Trim();
-            var billingAddress = string.IsNullOrWhiteSpace(draft.PostpaidBillingAddress) ? null : draft.PostpaidBillingAddress.Trim();
-
-            if (user.NationalId != nationalId || user.BillingAddress != billingAddress)
-            {
-                user.NationalId = nationalId;
-                user.BillingAddress = billingAddress;
-            }
-        }
+        // No longer collecting National ID / Billing address for postpaid in checkout.
 
         if (user != null && product != null)
         {

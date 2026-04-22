@@ -330,11 +330,6 @@
                         <p><strong>Product:</strong> @Model.ProductName</p>
                         <p><strong>Phone number:</strong> @transaction.PhoneNumber</p>
                         <p><strong>Payment method:</strong> @transaction.PaymentMethod</p>
-                        @if (transaction.Type == TransactionType.Postpaid)
-                        {
-                            <p><strong>National ID / CCCD:</strong> @(transaction.PostpaidNationalId ?? "-")</p>
-                            <p><strong>Billing address:</strong> @(transaction.PostpaidBillingAddress ?? "-")</p>
-                        }
                     </div>
                 </div>
 

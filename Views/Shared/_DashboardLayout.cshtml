@@ -44,6 +44,9 @@
                 </div>
 
                 <div class="topbar-actions d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-dark nav-btn" id="sidebarToggle" aria-label="Toggle sidebar">
+                        <i class="bi bi-layout-sidebar-inset"></i>
+                    </button>
                     @await Html.PartialAsync("_NotificationBell", bell)
                     <span class="user-chip user-chip-dashboard">
                         <i class="bi bi-shield-check"></i>
@@ -211,6 +214,35 @@
             }
 
             initViewMore();
+
+            (function initSidebarCollapse() {
+                const shell = document.querySelector(".dashboard-shell");
+                const toggle = document.getElementById("sidebarToggle");
+                if (!shell || !toggle) {
+                    return;
+                }
+
+                const storageKey = "dashboardSidebarCollapsed";
+
+                function setCollapsed(collapsed) {
+                    shell.classList.toggle("is-collapsed", collapsed);
+                    try {
+                        window.localStorage.setItem(storageKey, collapsed ? "1" : "0");
+                    } catch { }
+                }
+
+                let collapsed = false;
+                try {
+                    collapsed = window.localStorage.getItem(storageKey) === "1";
+                } catch { }
+
+                setCollapsed(collapsed);
+
+                toggle.addEventListener("click", function () {
+                    collapsed = !shell.classList.contains("is-collapsed");
+                    setCollapsed(collapsed);
+                });
+            })();
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

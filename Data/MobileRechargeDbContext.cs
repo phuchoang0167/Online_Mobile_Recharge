@@ -22,6 +22,7 @@ public class MobileRechargeDbContext : DbContext
     public DbSet<Sale> Sales { get; set; }
     public DbSet<Card> Cards { get; set; }
     public DbSet<PhoneDataSubscription> PhoneDataSubscriptions { get; set; }
+    public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -143,6 +144,14 @@ public class MobileRechargeDbContext : DbContext
             .Property(t => t.PostpaidBillingAddress)
             .HasMaxLength(500);
 
+        modelBuilder.Entity<Transaction>()
+            .Property(t => t.PaymentExternalId)
+            .HasMaxLength(100);
+
+        modelBuilder.Entity<Transaction>()
+            .Property(t => t.PaymentExternalPayerId)
+            .HasMaxLength(100);
+
 
         // ================= BONUS =================
         modelBuilder.Entity<User>()
@@ -188,6 +197,21 @@ public class MobileRechargeDbContext : DbContext
 
         modelBuilder.Entity<Transaction>()
             .Property(t => t.PhoneNumber)
+            .IsRequired();
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .Property(x => x.EntityType)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .Property(x => x.Action)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .Property(x => x.Summary)
+            .HasMaxLength(400)
             .IsRequired();
 
         modelBuilder.Entity<Feedback>()

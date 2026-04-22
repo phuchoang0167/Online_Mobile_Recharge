@@ -41,4 +41,6 @@ public class CheckoutViewModel
     public int? SavedCardId { get; set; }
 
     public List<SavedCardOptionViewModel> SavedCards { get; set; } = new();
+
+    public string PrepaidPaymentMethod { get; set; } = "card";
 }

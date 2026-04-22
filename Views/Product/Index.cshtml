@@ -156,6 +156,15 @@
         </div>
     }
 
+    @await Html.PartialAsync("_UiBanner", new Online_Mobile_Recharge.Models.ViewModels.UiBannerViewModel
+    {
+        Title = "Tip: filter & compare",
+        Subtitle = "Use search + type filters to quickly find the right package. No product images needed—focus on price and details.",
+        IconClass = "bi bi-funnel",
+        CtaText = "View FAQ",
+        CtaUrl = Url.Action("Faq", "Home")
+    })
+
     <div class="content-panel">
         <div class="row mb-4 g-2">
             <div class="col-md-5">

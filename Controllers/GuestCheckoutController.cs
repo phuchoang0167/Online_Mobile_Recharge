@@ -82,6 +82,7 @@ public class GuestCheckoutController : Controller
             guestUser.Id,
             phone,
             type: "prepaid",
+            prepaidPaymentMethod: "card",
             postpaidNationalId: null,
             postpaidBillingAddress: null,
             postpaidAgreeToTerms: false,

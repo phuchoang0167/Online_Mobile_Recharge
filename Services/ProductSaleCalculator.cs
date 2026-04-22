@@ -5,19 +5,31 @@ namespace Online_Mobile_Recharge.Services
 {
     public static class ProductSaleCalculator
     {
-        public static bool IsActive(ProductSale? sale, DateTime now)
+        private static bool IsValidSaleData(ProductSale? sale, out ProductSale validSale)
         {
             if (sale == null || sale.SaleType == ProductSaleType.None || sale.SaleValue <= 0)
             {
+                validSale = null!;
                 return false;
             }
 
-            if (sale.StartAt is DateTime start && now < start)
+            validSale = sale;
+            return true;
+        }
+
+        public static bool IsActive(ProductSale? sale, DateTime now)
+        {
+            if (!IsValidSaleData(sale, out var validSale))
             {
                 return false;
             }
 
-            if (sale.EndAt is DateTime end && now > end)
+            if (validSale.StartAt is DateTime start && now < start)
+            {
+                return false;
+            }
+
+            if (validSale.EndAt is DateTime end && now > end)
             {
                 return false;
             }
@@ -25,19 +37,29 @@ namespace Online_Mobile_Recharge.Services
             return true;
         }
 
+        public static decimal GetEffectivePrice(decimal originalPrice, ProductSale? sale, DateTime now)
+        {
+            if (!IsActive(sale, now))
+            {
+                return originalPrice;
+            }
+
+            return GetEffectivePrice(originalPrice, sale);
+        }
+
         public static decimal GetEffectivePrice(decimal originalPrice, ProductSale? sale)
         {
-            if (sale == null || sale.SaleType == ProductSaleType.None || sale.SaleValue <= 0)
+            if (!IsValidSaleData(sale, out var validSale))
             {
                 return originalPrice;
             }
 
             var computed = originalPrice;
-            switch (sale.SaleType)
+            switch (validSale.SaleType)
             {
                 case ProductSaleType.Percent:
                     {
-                        var percent = sale.SaleValue;
+                        var percent = validSale.SaleValue;
                         if (percent <= 0 || percent > 100)
                         {
                             return originalPrice;
@@ -47,7 +69,7 @@ namespace Online_Mobile_Recharge.Services
                         break;
                     }
                 case ProductSaleType.FixedAmount:
-                    computed = originalPrice - sale.SaleValue;
+                    computed = originalPrice - validSale.SaleValue;
                     break;
             }
 
@@ -57,6 +79,16 @@ namespace Online_Mobile_Recharge.Services
             }
 
             return decimal.Round(computed, 0, MidpointRounding.AwayFromZero);
+        }
+
+        public static string? GetBadgeText(ProductSale? sale, DateTime now)
+        {
+            if (!IsActive(sale, now))
+            {
+                return null;
+            }
+
+            return GetBadgeText(sale);
         }
 
         public static string? GetBadgeText(ProductSale? sale)
@@ -75,4 +107,3 @@ namespace Online_Mobile_Recharge.Services
         }
     }
 }
-

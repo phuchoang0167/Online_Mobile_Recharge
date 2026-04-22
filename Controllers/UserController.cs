@@ -199,8 +199,6 @@ public class UserController : Controller
 
         model.Name = (model.Name ?? string.Empty).Trim();
         model.PhoneNumber = (model.PhoneNumber ?? string.Empty).Trim();
-        model.NationalId = (model.NationalId ?? string.Empty).Trim();
-        model.BillingAddress = (model.BillingAddress ?? string.Empty).Trim();
         model.Email = user.Email;
         model.EmailVerified = user.EmailVerified;
         model.CreatedAt = user.CreatedAt;
@@ -210,11 +208,6 @@ public class UserController : Controller
             ModelState.AddModelError(nameof(model.Name), "Name is required.");
         }
 
-        if (!string.IsNullOrWhiteSpace(model.NationalId) && !System.Text.RegularExpressions.Regex.IsMatch(model.NationalId, @"^\d{9}(\d{3})?$"))
-        {
-            ModelState.AddModelError(nameof(model.NationalId), "National ID / CCCD must be 9 or 12 digits.");
-        }
-
         if (!ModelState.IsValid)
         {
             return View("Settings", model);
@@ -222,8 +215,6 @@ public class UserController : Controller
 
         user.Name = (model.Name ?? string.Empty).Trim();
         user.PhoneNumber = (model.PhoneNumber ?? string.Empty).Trim();
-        user.NationalId = string.IsNullOrWhiteSpace(model.NationalId) ? null : model.NationalId.Trim();
-        user.BillingAddress = string.IsNullOrWhiteSpace(model.BillingAddress) ? null : model.BillingAddress.Trim();
 
         await _context.SaveChangesAsync();
 
@@ -296,8 +287,6 @@ public class UserController : Controller
         Name = user.Name,
         Email = user.Email,
         PhoneNumber = user.PhoneNumber,
-        NationalId = user.NationalId,
-        BillingAddress = user.BillingAddress,
         EmailVerified = user.EmailVerified,
         CreatedAt = user.CreatedAt
     };
@@ -307,8 +296,6 @@ public class UserController : Controller
         Name = user.Name,
         Email = user.Email,
         PhoneNumber = user.PhoneNumber,
-        NationalId = user.NationalId,
-        BillingAddress = user.BillingAddress,
         EmailVerified = user.EmailVerified,
         CreatedAt = user.CreatedAt
     };

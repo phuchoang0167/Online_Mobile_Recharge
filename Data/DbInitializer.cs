@@ -154,9 +154,35 @@ public static class DbInitializer
         var rng = new Random(20260417);
         var users = new List<User>();
 
+        static string Pick(Random random, string[] source) => source[random.Next(0, source.Length)];
+
+        var familyNames = new[]
+        {
+            "Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý"
+        };
+
+        var middleNames = new[]
+        {
+            "Văn", "Thị", "Minh", "Thanh", "Quang", "Hữu", "Đức", "Gia", "Bảo", "Khánh", "Ngọc", "Anh", "Tuấn", "Hải", "Thảo", "Phương"
+        };
+
+        var givenNames = new[]
+        {
+            "An", "Bình", "Chi", "Dũng", "Dương", "Giang", "Hà", "Hiếu", "Hùng", "Hương", "Khang", "Lan", "Linh", "Long", "Mai", "Nam",
+            "Nhi", "Nhung", "Phát", "Phúc", "Quân", "Sơn", "Tâm", "Thành", "Thảo", "Thịnh", "Trang", "Trí", "Trung", "Tú", "Uyên", "Vinh"
+        };
+
+        string BuildFullName()
+        {
+            var family = Pick(rng, familyNames);
+            var middle = Pick(rng, middleNames);
+            var given = Pick(rng, givenNames);
+            return $"{family} {middle} {given}";
+        }
+
         var admin = new User
         {
-            Name = "Admin",
+            Name = "Quản trị hệ thống",
             Email = "admin@gmail.com",
             Password = string.Empty,
             Role = "Admin",
@@ -167,17 +193,27 @@ public static class DbInitializer
         admin.Password = PasswordHelper.HashPassword(admin, "123");
         users.Add(admin);
 
-        for (var i = 1; i <= 5; i++)
+        var initialUsers = new (string Name, string Email, string Phone)[]
         {
+            ("Nguyễn Minh Anh", "minhanh.nguyen@gmail.com", "0900000001"),
+            ("Trần Quang Huy", "quanghuy.tran@gmail.com", "0900000002"),
+            ("Lê Thị Lan", "thilan.le@gmail.com", "0900000003"),
+            ("Phạm Đức Long", "duclong.pham@gmail.com", "0900000004"),
+            ("Hoàng Ngọc Mai", "ngocmai.hoang@gmail.com", "0900000005")
+        };
+
+        for (var i = 0; i < initialUsers.Length; i++)
+        {
+            var entry = initialUsers[i];
             var user = new User
             {
-                Name = $"User {i}",
-                Email = $"user{i}@gmail.com",
+                Name = entry.Name,
+                Email = entry.Email,
                 Password = string.Empty,
                 Role = "User",
-                PhoneNumber = $"090000000{i}",
+                PhoneNumber = entry.Phone,
                 EmailVerified = true,
-                CreatedAt = now.AddDays(-i * 2)
+                CreatedAt = now.AddDays(-(i + 1) * 2)
             };
             user.Password = PasswordHelper.HashPassword(user, "123");
             users.Add(user);
@@ -194,13 +230,13 @@ public static class DbInitializer
 
             var user = new User
             {
-                Name = $"Demo User {i:000}",
+                Name = BuildFullName(),
                 Email = $"demo.user{i:000}@example.com",
                 Password = string.Empty,
                 Role = "User",
                 PhoneNumber = phone,
-                NationalId = (rng.NextDouble() < 0.70) ? $"VN{rng.Next(100000000, 999999999)}" : null,
-                BillingAddress = (rng.NextDouble() < 0.65) ? $"{rng.Next(1, 999)} Nguyen Trai, Ward {rng.Next(1, 15)}, District {rng.Next(1, 12)}, HCMC" : null,
+                NationalId = null,
+                BillingAddress = null,
                 EmailVerified = emailVerified,
                 IsActive = isActive,
                 IsDeleted = isDeleted,
@@ -213,7 +249,7 @@ public static class DbInitializer
         // Demo guest user used by guest checkout flows (not allowed to login).
         var guest = new User
         {
-            Name = "Guest 0909999999",
+            Name = "Khách 0909999999",
             Email = "guest+0909999999@guest.local",
             Password = string.Empty,
             Role = "Guest",
@@ -450,8 +486,8 @@ public static class DbInitializer
                 CreatedAt = now.AddDays(-2 - user.Id),
                 DueDate = now.AddDays((user.Id % 2 == 0) ? 1 : -1),
                 IsPaid = false,
-                PostpaidNationalId = user.NationalId ?? $"VN{rng.Next(100000000, 999999999)}",
-                PostpaidBillingAddress = user.BillingAddress ?? $"{rng.Next(1, 999)} Le Loi, District 1, HCMC",
+                PostpaidNationalId = null,
+                PostpaidBillingAddress = null,
                 PostpaidAgreedAt = now.AddDays(-2 - user.Id).AddMinutes(5)
             });
         }
@@ -505,15 +541,8 @@ public static class DbInitializer
 
             if (type == TransactionType.Postpaid)
             {
-                if (rng.NextDouble() < 0.85)
-                {
-                    transaction.PostpaidNationalId = user.NationalId ?? $"VN{rng.Next(100000000, 999999999)}";
-                }
-
-                if (rng.NextDouble() < 0.85)
-                {
-                    transaction.PostpaidBillingAddress = user.BillingAddress ?? $"{rng.Next(1, 999)} Vo Van Tan, District 3, HCMC";
-                }
+                transaction.PostpaidNationalId = null;
+                transaction.PostpaidBillingAddress = null;
 
                 if (rng.NextDouble() < 0.90)
                 {

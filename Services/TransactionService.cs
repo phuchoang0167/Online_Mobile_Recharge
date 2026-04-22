@@ -75,7 +75,7 @@ public class TransactionService
         }
 
         var activeSale = GetActiveSale(productId, now);
-        var amount = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale);
+        var amount = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale, now);
 
         var transaction = new Transaction
         {
@@ -191,6 +191,7 @@ public class TransactionService
         int userId,
         string phone,
         string type,
+        string? prepaidPaymentMethod,
         string? postpaidNationalId,
         string? postpaidBillingAddress,
         bool postpaidAgreeToTerms,
@@ -210,10 +211,11 @@ public class TransactionService
 
         var now = DateTime.Now;
         var activeSale = GetActiveSale(productId, now);
-        var amount = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale);
+        var amount = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale, now);
 
         var normalizedType = (type ?? string.Empty).Trim().ToLowerInvariant();
         var sanitizedPhone = NormalizePhone(phone);
+        var normalizedPrepaidMethod = (prepaidPaymentMethod ?? "card").Trim().ToLowerInvariant();
 
         if (normalizedType == "postpaid")
         {
@@ -303,6 +305,39 @@ public class TransactionService
             return new PaymentProcessResult
             {
                 Transaction = postpaidTransaction
+            };
+        }
+
+        if (normalizedPrepaidMethod != "card" &&
+            normalizedPrepaidMethod != "paypal")
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "Invalid payment method."
+            };
+        }
+
+        if (normalizedPrepaidMethod == "paypal")
+        {
+            var pendingTransaction = new Transaction
+            {
+                UserId = userId,
+                PhoneNumber = sanitizedPhone,
+                Amount = amount,
+                Type = TransactionType.Prepaid,
+                PaymentMethod = PaymentMethod.PayPalSandbox,
+                Status = TransactionStatus.Pending,
+                CreatedAt = now,
+                IsPaid = false,
+                ProductId = productId
+            };
+
+            _context.Transactions.Add(pendingTransaction);
+            _context.SaveChanges();
+
+            return new PaymentProcessResult
+            {
+                Transaction = pendingTransaction
             };
         }
 
@@ -473,6 +508,79 @@ public class TransactionService
             x.CVV == normalizedCvv &&
             x.ExpiryDate.Month == expiryDate.Month &&
             x.ExpiryDate.Year == expiryDate.Year);
+    }
+
+    public PaymentProcessResult CompleteSandboxPrepaid(int transactionId, int userId, bool success)
+    {
+        return new PaymentProcessResult
+        {
+            ErrorMessage = "Sandbox payment is no longer supported."
+        };
+    }
+
+    public PaymentProcessResult CompletePayPalApproved(int transactionId, int userId, string? orderId, string? payerId)
+    {
+        var transaction = _context.Transactions
+            .Include(x => x.Product)
+            .FirstOrDefault(x =>
+                x.Id == transactionId &&
+                x.UserId == userId &&
+                x.Type == TransactionType.Prepaid &&
+                x.Status == TransactionStatus.Pending &&
+                x.PaymentMethod == PaymentMethod.PayPalSandbox);
+
+        if (transaction == null)
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "Pending PayPal transaction not found."
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(orderId))
+        {
+            transaction.PaymentExternalId = orderId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(payerId))
+        {
+            transaction.PaymentExternalPayerId = payerId;
+        }
+
+        var now = DateTime.Now;
+        transaction.Status = TransactionStatus.Success;
+        transaction.IsPaid = true;
+
+        if (transaction.Product != null)
+        {
+            TryActivateDataSubscription(transaction.Product, transaction.PhoneNumber, now);
+            TryActivateCallerTuneSubscription(transaction.Product, userId, now);
+        }
+
+        _context.SaveChanges();
+
+        return new PaymentProcessResult
+        {
+            Transaction = transaction
+        };
+    }
+
+    public void MarkPrepaidFailed(int transactionId, int userId, string reason)
+    {
+        var transaction = _context.Transactions.FirstOrDefault(x =>
+            x.Id == transactionId &&
+            x.UserId == userId &&
+            x.Type == TransactionType.Prepaid &&
+            x.Status == TransactionStatus.Pending);
+
+        if (transaction == null)
+        {
+            return;
+        }
+
+        transaction.Status = TransactionStatus.Failed;
+        transaction.IsPaid = false;
+        _context.SaveChanges();
     }
 
     private static bool TryParseExpiry(string? expiry, out DateTime expiryDate)

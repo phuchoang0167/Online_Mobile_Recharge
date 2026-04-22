@@ -1,4 +1,5 @@
 @model List<Online_Mobile_Recharge.Models.Entities.User>
+@using System.Linq
 
 @{
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
@@ -11,7 +12,7 @@
             <h2 class="display-font mb-2">User Management</h2>
             <p class="text-muted mb-0">Review accounts, update profile details, and lock or remove non-admin users when needed.</p>
         </div>
-        <div class="soft-pill">@Model.Count users</div>
+        <div class="soft-pill">@Model.Count(x => x.Role != "Admin") users</div>
     </div>
 
     <div class="table-responsive">
@@ -30,17 +31,18 @@
             <tbody>
                 @foreach (var item in Model)
                 {
+                    if (item.Role == "Admin")
+                    {
+                        continue;
+                    }
+
                     <tr>
                         <td>@item.Id</td>
                         <td>@item.Name</td>
                         <td>@item.Email</td>
                         <td>@item.PhoneNumber</td>
                         <td>
-                            @if (item.Role == "Admin")
-                            {
-                                <span class="badge bg-dark">Protected</span>
-                            }
-                            else if (item.IsActive)
+                            @if (item.IsActive)
                             {
                                 <span class="badge bg-success">Active</span>
                             }
@@ -50,36 +52,21 @@
                             }
                         </td>
                         <td>
-                            @if (item.Role != "Admin")
-                            {
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <a asp-action="EditUser"
-                                       asp-route-id="@item.Id"
-                                       class="btn btn-outline-secondary btn-sm">
-                                        Edit
-                                    </a>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a asp-action="EditUser"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    Edit
+                                </a>
 
-                                    <form asp-action="DeleteUser" method="post" class="d-inline" data-confirm-title="Delete user" data-confirm-message="Are you sure you want to remove this user?">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            Delete
-                                        </button>
-                                    </form>
-
-                                    <form asp-action="ToggleUser" method="post" class="d-inline" data-confirm-title="Update user status" data-confirm-message="Are you sure you want to @(item.IsActive ? "lock" : "unlock") this user?">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")">
-                                            @(item.IsActive ? "Lock" : "Unlock")
-                                        </button>
-                                    </form>
-                                </div>
-                            }
-                            else
-                            {
-                                <span class="text-muted">Protected</span>
-                            }
+                                <form asp-action="ToggleUser" method="post" class="d-inline" data-confirm-title="Update user status" data-confirm-message="Are you sure you want to @(item.IsActive ? "lock" : "unlock") this user?">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")">
+                                        @(item.IsActive ? "Lock" : "Unlock")
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }

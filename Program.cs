@@ -13,12 +13,15 @@ builder.Services.AddDbContext<MobileRechargeDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.Configure<SmtpOptions>(smtpSection);
 builder.Services.Configure<AppUrlOptions>(appUrlSection);
+builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
 
 builder.Services.AddScoped<TransactionService>();
 builder.Services.AddScoped<DndService>();
 builder.Services.AddScoped<FeedbackService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<EmailNotificationService>();
+builder.Services.AddScoped<PayPalService>();
+builder.Services.AddScoped<AdminAuditService>();
 
 builder.Services.AddSession();
 

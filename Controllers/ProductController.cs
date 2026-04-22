@@ -21,7 +21,7 @@ namespace Online_Mobile_Recharge.Controllers
 
         public IActionResult Index()
         {
-            ViewBag.SelectedPhoneNumber = HttpContext.Session.GetString(SelectedPhoneSessionKey) ?? string.Empty;
+            ViewBag.SelectedPhoneNumber = string.Empty;
             ViewBag.IsLoggedIn = HttpContext.Session.GetInt32("UserId") != null;
 
             var now = DateTime.Now;
@@ -72,9 +72,9 @@ namespace Online_Mobile_Recharge.Controllers
                     {
                         ProductId = x.Id,
                         OriginalPrice = x.Price,
-                        EffectivePrice = ProductSaleCalculator.GetEffectivePrice(x.Price, sale),
+                        EffectivePrice = ProductSaleCalculator.GetEffectivePrice(x.Price, sale, now),
                         HasSale = ProductSaleCalculator.IsActive(sale, now),
-                        SaleBadgeText = ProductSaleCalculator.GetBadgeText(sale)
+                        SaleBadgeText = ProductSaleCalculator.GetBadgeText(sale, now)
                     };
                 });
 
@@ -115,9 +115,9 @@ namespace Online_Mobile_Recharge.Controllers
             {
                 ProductId = product.Id,
                 OriginalPrice = product.Price,
-                EffectivePrice = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale),
+                EffectivePrice = ProductSaleCalculator.GetEffectivePrice(product.Price, activeSale, now),
                 HasSale = ProductSaleCalculator.IsActive(activeSale, now),
-                SaleBadgeText = ProductSaleCalculator.GetBadgeText(activeSale)
+                SaleBadgeText = ProductSaleCalculator.GetBadgeText(activeSale, now)
             };
 
             var userId = HttpContext.Session.GetInt32("UserId");

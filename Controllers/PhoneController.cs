@@ -37,7 +37,7 @@ public class PhoneController : Controller
         }
 
         HttpContext.Session.SetString(SelectedPhoneSessionKey, model.Phone);
-        TempData["SuccessMessage"] = $"Đã chọn số điện thoại: {model.Phone}";
+        TempData["SuccessMessage"] = "Đã chọn số điện thoại.";
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
         {
@@ -47,4 +47,3 @@ public class PhoneController : Controller
         return RedirectToAction("Index", "Product");
     }
 }
-

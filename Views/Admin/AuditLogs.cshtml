@@ -1,0 +1,107 @@
+@model List<Online_Mobile_Recharge.Models.Entities.AdminAuditLog>
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Audit Logs";
+    var q = (ViewBag.Query as string) ?? string.Empty;
+    var entityType = (ViewBag.EntityType as string) ?? string.Empty;
+    var action = (ViewBag.Action as string) ?? string.Empty;
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="display-font mb-2">Audit Logs</h2>
+            <p class="text-muted mb-0">Track admin actions (create/update/delete) across key entities.</p>
+        </div>
+        <div class="soft-pill">@Model.Count logs</div>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-5">
+            <label class="form-label mb-1">Search</label>
+            <input name="q" value="@q" class="form-control" placeholder="Keyword in summary/entity/action" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label mb-1">Entity</label>
+            <input name="entityType" value="@entityType" class="form-control" placeholder="User / Product / ProductSale ..." />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label mb-1">Action</label>
+            <input name="action" value="@action" class="form-control" placeholder="Create / Update / Delete" />
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-brand w-100">Filter</button>
+            <a asp-action="AuditLogs" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 app-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Admin</th>
+                    <th>Entity</th>
+                    <th>Action</th>
+                    <th>Summary</th>
+                    <th style="width: 110px;">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td class="text-muted">@log.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@log.AdminUserId</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@log.EntityType</span>
+                            <span class="text-muted">#@log.EntityId</span>
+                        </td>
+                        <td>
+                            <span class="badge @(log.Action == "Delete" ? "bg-danger" : log.Action == "Create" ? "bg-success" : "bg-primary")">
+                                @log.Action
+                            </span>
+                        </td>
+                        <td>@log.Summary</td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#auditLogModal@log.Id">
+                                View
+                            </button>
+
+                            <div class="modal fade" id="auditLogModal@log.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Audit log #@log.Id</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row g-3">
+                                                <div class="col-12 col-md-6">
+                                                    <div class="small text-muted">Old data</div>
+                                                    <pre class="bg-light border rounded p-2 small mb-0">@((log.OldDataJson ?? "-").Trim())</pre>
+                                                </div>
+                                                <div class="col-12 col-md-6">
+                                                    <div class="small text-muted">New data</div>
+                                                    <pre class="bg-light border rounded p-2 small mb-0">@((log.NewDataJson ?? "-").Trim())</pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

@@ -25,6 +25,9 @@ namespace Online_Mobile_Recharge.Models.Entities
         public DateTime? PostpaidAgreedAt { get; set; }
         public DateTime? PostpaidContractAgreedAt { get; set; }
 
+        public string? PaymentExternalId { get; set; }
+        public string? PaymentExternalPayerId { get; set; }
+
         public int? ProductId { get; set; }
         public Product? Product { get; set; }
 
