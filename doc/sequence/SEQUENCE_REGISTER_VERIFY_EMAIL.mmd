@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor User
+    participant Register as Register View
+    participant Account as AccountController
+    participant Password as PasswordHelper
+    participant Token as AuthTokenHelper
+    participant Mail as EmailNotificationService
+    participant DB as Database
+    participant Login as Login View
+
+    User->>Register: Submit register form
+    Register->>Account: POST /Account/Register
+    Account->>DB: Check duplicate email
+    DB-->>Account: Result
+    Account->>Password: Hash password
+    Password-->>Account: Password hash
+    Account->>Token: Create verification token
+    Token-->>Account: Token + hash
+    Account->>DB: Save new user + token hash
+    DB-->>Account: Saved
+    Account->>Mail: Send verification link
+    Mail-->>Account: Sent / Failed
+    Account-->>Login: Redirect with success or fallback link
+
+    User->>Login: Open verification link
+    Login->>Account: GET /Account/VerifyEmail
+    Account->>Token: Hash incoming token
+    Token-->>Account: Token hash
+    Account->>DB: Match user by token hash
+    DB-->>Account: User record
+    Account->>DB: Mark EmailVerified = true
+    DB-->>Account: Updated
+    Account-->>Login: Redirect with verified message

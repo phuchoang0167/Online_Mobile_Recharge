@@ -1,0 +1,142 @@
+@model Online_Mobile_Recharge.Models.ViewModels.CheckoutReviewViewModel
+
+@{
+    ViewData["Title"] = "Review Order";
+    var isPostpaid = string.Equals(Model.Checkout.Type, "postpaid", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="container mt-5">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-8">
+            <div class="content-panel">
+                <span class="badge text-bg-dark mb-3">Review</span>
+                <h3 class="display-font mb-2">Confirm before @(isPostpaid ? "creating the bill" : "payment")</h3>
+                <p class="text-muted mb-4">Please double-check the details below. This step is required before we process anything.</p>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger mb-3">@TempData["ErrorMessage"]</div>
+                }
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+                }
+
+                <div class="table-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Product</span>
+                        <strong>@Model.Checkout.ProductName</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="text-muted">Phone</span>
+                        <strong>@Model.Checkout.Phone</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="text-muted">Type</span>
+                        <strong class="text-capitalize">@Model.Checkout.Type</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="text-muted">Amount</span>
+                        <strong class="text-danger">@Model.Checkout.Price.ToString("N0") VND</strong>
+                    </div>
+                </div>
+
+                @if (!isPostpaid)
+                {
+                    <div class="table-card mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Card</span>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.MaskedCardNumber) ? "—" : Model.MaskedCardNumber)</strong>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.CardLabel))
+                        {
+                            <div class="text-muted small mt-2">@Model.CardLabel</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="table-card mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">National ID / CCCD</span>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.Checkout.PostpaidNationalId) ? "—" : Model.Checkout.PostpaidNationalId)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="text-muted">Billing address</span>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.Checkout.PostpaidBillingAddress) ? "—" : Model.Checkout.PostpaidBillingAddress)</strong>
+                        </div>
+                    </div>
+                }
+
+                <form asp-action="Confirm" method="post" class="d-grid gap-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Token" value="@Model.Token" />
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger mb-0">
+                            @Html.ValidationSummary(false)
+                        </div>
+                    }
+
+                    @if (isPostpaid)
+                    {
+                        <div class="table-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" name="PostpaidAgreeToTerms" value="true" />
+                                <input type="hidden" name="PostpaidAgreeToTerms" value="false" />
+                                <label class="form-check-label" for="agreeTerms">
+                                    I agree to the <a asp-controller="Home" asp-action="Terms">terms &amp; conditions</a>.
+                                </label>
+                            </div>
+                            @Html.ValidationMessage("PostpaidAgreeToTerms", new { @class = "text-danger small" })
+
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="agreeContract" name="PostpaidAgreeToContract" value="true" />
+                                <input type="hidden" name="PostpaidAgreeToContract" value="false" />
+                                <label class="form-check-label" for="agreeContract">
+                                    I agree to the <a asp-controller="Home" asp-action="PostpaidContract">postpaid purchase contract</a>.
+                                </label>
+                            </div>
+                            @Html.ValidationMessage("PostpaidAgreeToContract", new { @class = "text-danger small" })
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2 justify-content-between flex-wrap">
+                        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-productId="@Model.Checkout.ProductId">Edit details</a>
+                        <button type="submit" class="btn btn-brand btn-lg" id="confirmButton">
+                            @(isPostpaid ? "Create postpaid bill" : "Pay now")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isPostpaid = "@(isPostpaid ? "1" : "0")" === "1";
+            if (!isPostpaid) return;
+
+            const confirmButton = document.getElementById("confirmButton");
+            const agreeTerms = document.getElementById("agreeTerms");
+            const agreeContract = document.getElementById("agreeContract");
+
+            function updateState() {
+                const ok = !!(agreeTerms && agreeTerms.checked) && !!(agreeContract && agreeContract.checked);
+                if (confirmButton) confirmButton.disabled = !ok;
+            }
+
+            updateState();
+            [agreeTerms, agreeContract].forEach(function (el) {
+                if (!el) return;
+                el.addEventListener("change", updateState);
+            });
+        });
+    </script>
+}

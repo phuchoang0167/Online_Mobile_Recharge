@@ -1,0 +1,39 @@
+flowchart TD
+    Home[Home]
+
+    Home --> About[About]
+    Home --> HowItWorks[How It Works]
+    Home --> FAQ[FAQ]
+    Home --> Contact[Contact]
+    Home --> Terms[Terms]
+    Home --> Privacy[Privacy]
+    Home --> SitemapPage[Sitemap]
+    Home --> Products[Products]
+    Home --> FeedbackCenter[Feedback]
+    Home --> Login[Login]
+    Home --> Register[Register]
+
+    Products --> ProductDetail[Product Detail]
+    ProductDetail --> Checkout[Checkout]
+    Checkout --> Success[Checkout Success]
+
+    Login --> ResetPassword[Reset Password]
+    Register --> EmailVerify[Email Verify]
+
+    Home --> UserDashboard[User Dashboard]
+    UserDashboard --> Profile[Profile]
+    UserDashboard --> UserTransactions[Transaction History]
+    UserDashboard --> UserCards[Manage Cards]
+    UserDashboard --> DND[DND]
+    UserDashboard --> CallerTune[Caller Tune]
+    UserDashboard --> MyFeedback[My Feedback]
+    UserDashboard --> Notifications[Notification Bell]
+
+    UserTransactions --> PayPostpaid[Pay Postpaid Bill]
+    UserTransactions --> Invoice[Invoice / Bill PDF]
+
+    Home --> AdminDashboard[Admin Dashboard]
+    AdminDashboard --> AdminUsers[Manage Users]
+    AdminDashboard --> AdminTransactions[Admin Transactions]
+    AdminDashboard --> AdminFeedbacks[Admin Feedbacks]
+    AdminDashboard --> AdminNotifications[Notification Bell]

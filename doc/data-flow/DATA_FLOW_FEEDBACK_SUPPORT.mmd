@@ -1,0 +1,38 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    UG[User / Guest]
+    PD((Product Detail))
+    CV((Contact / Feedback Center))
+    AV((Admin Feedbacks))
+
+    FC((FeedbackController))
+    HC((HomeController))
+    ADC((AdminController))
+
+    FS((FeedbackService))
+    ENS((EmailNotificationService))
+
+    DB[(Feedbacks / Transactions / Products / Users)]
+    SMTP[Email]
+
+    UG --> PD
+    PD --> FC
+    FC --> FS
+    FS --> DB
+    DB --> FS
+    FS --> FC
+    FC --> PD
+
+    UG --> CV
+    CV --> HC
+    HC --> FS
+    FS --> DB
+    HC --> ENS
+    ENS --> SMTP
+    HC --> CV
+
+    AV --> ADC
+    ADC --> DB
+    DB --> ADC
+    ADC --> AV

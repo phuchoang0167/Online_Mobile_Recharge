@@ -1,0 +1,39 @@
+sequenceDiagram
+    actor User
+    participant Checkout as Checkout View
+    participant History as Transaction History View
+    participant PayView as Pay Postpaid View
+    participant CheckoutController as CheckoutController
+    participant UserTx as UserTransactionController
+    participant TxService as TransactionService
+    participant DB as Database
+
+    User->>Checkout: Choose postpaid payment type
+    Checkout->>CheckoutController: POST /Checkout/Process
+    CheckoutController->>TxService: Create postpaid bill
+    TxService->>DB: Save Pending transaction + due date
+    DB-->>TxService: Saved
+    TxService-->>CheckoutController: Pending result
+    CheckoutController-->>History: Redirect to success/history
+
+    User->>History: Open pending bill
+    History->>UserTx: GET /User/Transaction/Pay/{id}
+    UserTx->>DB: Load pending transaction + cards
+    DB-->>UserTx: Bill + cards
+    UserTx-->>PayView: Show payment form
+
+    User->>PayView: Confirm card and CVV
+    PayView->>UserTx: POST /User/Transaction/Pay/{id}
+    UserTx->>TxService: Settle postpaid bill
+    TxService->>DB: Validate card + balance + bill state
+    DB-->>TxService: Validation result
+
+    alt Settle success
+        TxService->>DB: Update transaction to Success
+        DB-->>TxService: Updated
+        TxService-->>UserTx: Success
+        UserTx-->>History: Redirect with success message
+    else Settle fail
+        TxService-->>UserTx: Failure
+        UserTx-->>PayView: Return form with error
+    end

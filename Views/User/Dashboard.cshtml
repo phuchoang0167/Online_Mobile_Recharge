@@ -1,0 +1,324 @@
+@using Online_Mobile_Recharge.Models.Entities
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "User Dashboard";
+
+    var lastSuccessfulTransaction = ViewBag.LastSuccessfulTransaction as Transaction;
+    var latestPendingBill = ViewBag.LatestPendingBill as Transaction;
+    var dueSoonBills = ViewBag.LatestDueSoonBills as List<Transaction> ?? new();
+    var recentFeedbacks = ViewBag.RecentFeedbacks as List<Feedback> ?? new();
+
+    int overdueBills = ViewBag.OverdueBills ?? 0;
+    int dueSoonBillsCount = ViewBag.DueSoonBills ?? 0;
+    int totalTransactions = ViewBag.TotalTransactions ?? 0;
+    int pendingBills = ViewBag.PendingBills ?? 0;
+    int savedCards = ViewBag.SavedCards ?? 0;
+    int myFeedbacks = ViewBag.MyFeedbacks ?? 0;
+
+    decimal totalSpent = ViewBag.TotalSpent ?? 0m;
+    decimal availableBalance = ViewBag.AvailableBalance ?? 0m;
+    decimal pendingAmount = ViewBag.PendingAmount ?? 0m;
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+    <div>
+        <h2 class="display-font mb-2">Dashboard</h2>
+        <p class="text-muted mb-0">Saved cards, due soon postpaid bills, and your feedback.</p>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="User" asp-action="Settings" class="btn btn-brand">Account settings</a>
+        <a asp-controller="UserTransaction" asp-action="Index" class="btn btn-outline-secondary">Transactions</a>
+    </div>
+</div>
+
+@if (overdueBills > 0)
+{
+    <div class="status-note status-note-danger mb-4">
+        <strong>Overdue reminder:</strong>
+        You have @overdueBills overdue postpaid bill(s). Open transaction history and pay them as soon as possible.
+    </div>
+}
+else if (dueSoonBillsCount > 0)
+{
+    <div class="status-note status-note-warning mb-4">
+        <strong>Upcoming reminder:</strong>
+        You have @dueSoonBillsCount postpaid bill(s) due within the next 2 days.
+    </div>
+}
+
+<div class="row text-center g-3 mb-4">
+
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100 is-clickable"
+             data-click-url="@Url.Action("Index", "UserTransaction")"
+             role="button"
+             tabindex="0">
+            <div class="ui-card-head">
+                <span class="ui-icon-bubble soft-dark"><i class="bi bi-receipt"></i></span>
+                <h5>Total transactions</h5>
+            </div>
+            <h2 class="text-primary display-font">@totalTransactions</h2>
+            <p class="text-muted mb-0">
+                All of your top-up, package purchase, and postpaid bill transactions.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100 is-clickable"
+             data-click-url="@Url.Action("Index", "UserTransaction", new { status = "success" })"
+             role="button"
+             tabindex="0">
+            <div class="ui-card-head">
+                <span class="ui-icon-bubble soft-info"><i class="bi bi-cash-coin"></i></span>
+                <h5>Total spent</h5>
+            </div>
+            <h2 class="text-success display-font">@totalSpent.ToString("N0") VND</h2>
+            <p class="text-muted mb-0">
+                Calculated from successful transactions only.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100 is-clickable"
+             data-click-url="@Url.Action("Index", "UserTransaction", new { type = "postpaid", status = "pending" })"
+             role="button"
+             tabindex="0">
+            <div class="ui-card-head">
+                <span class="ui-icon-bubble soft-warning"><i class="bi bi-hourglass-split"></i></span>
+                <h5>Postpaid bills</h5>
+            </div>
+            <h2 class="text-danger display-font">@pendingBills</h2>
+            <p class="text-muted mb-0">
+                Pending bills that still need your payment confirmation.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100 is-clickable"
+             data-click-url="@Url.Action("Index", "Feedback")"
+             role="button"
+             tabindex="0">
+            <div class="ui-card-head">
+                <span class="ui-icon-bubble"><i class="bi bi-chat-left-dots"></i></span>
+                <h5>Your feedback</h5>
+            </div>
+            <h2 class="text-dark display-font">@myFeedbacks</h2>
+            <p class="text-muted mb-0">
+                Reviews you submitted for purchased products.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-12">
+        <div class="content-panel h-100">
+            <h4 class="display-font mb-3">Action items</h4>
+
+            <div class="d-grid gap-3">
+
+                <div class="table-card is-clickable"
+                     data-click-url="@Url.Action("Index", "UserTransaction", new { type = "postpaid", status = "pending" })"
+                     role="button"
+                     tabindex="0">
+                    <div class="ui-card-head">
+                        <span class="ui-icon-bubble soft-warning"><i class="bi bi-credit-card-2-front"></i></span>
+                        <strong>Postpaid payments</strong>
+                    </div>
+                    <p class="text-muted mb-2">
+                        If you still have pending bills, open transaction history and enter your card details to pay them.
+                    </p>
+                    <a asp-controller="UserTransaction" asp-action="Index" class="btn btn-brand btn-sm">
+                        Open bills
+                    </a>
+                </div>
+
+                <div class="table-card is-clickable"
+                     data-click-url="@Url.Action("Index", "UserCard")"
+                     role="button"
+                     tabindex="0">
+                    <div class="ui-card-head">
+                        <span class="ui-icon-bubble soft-info"><i class="bi bi-wallet2"></i></span>
+                        <strong>Saved cards</strong>
+                    </div>
+                    <p class="text-muted mb-2">
+                        Add, edit, or remove the cards you want to use during checkout and bill payment.
+                    </p>
+                    <a asp-controller="UserCard" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        Open cards
+                    </a>
+                </div>
+
+                <div class="table-card is-clickable"
+                     data-click-url="@Url.Action("DataPackages", "User")"
+                     role="button"
+                     tabindex="0">
+                    <div class="ui-card-head">
+                        <span class="ui-icon-bubble"><i class="bi bi-broadcast"></i></span>
+                        <strong>Active data packages</strong>
+                    </div>
+                    <p class="text-muted mb-2">
+                        Review all data packages still valid for the phone numbers you purchased.
+                    </p>
+                    <a asp-controller="User" asp-action="DataPackages" class="btn btn-outline-secondary btn-sm">
+                        View packages
+                    </a>
+                </div>
+
+                <div class="table-card is-clickable"
+                     data-click-url="@Url.Action("Index", "Feedback")"
+                     role="button"
+                     tabindex="0">
+                    <div class="ui-card-head">
+                        <span class="ui-icon-bubble soft-dark"><i class="bi bi-star"></i></span>
+                        <strong>Product feedback</strong>
+                    </div>
+                    <p class="text-muted mb-2">
+                        You can leave feedback only after a successful purchase, and you may edit it within 1 day.
+                    </p>
+                    <a asp-controller="Feedback" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        View my feedback
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4 mt-1">
+
+    <div class="col-lg-12">
+        <div class="content-panel">
+
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <h4 class="display-font mb-0">Latest pending bill</h4>
+
+                <a asp-controller="UserTransaction" asp-action="Index"
+                       class="btn btn-outline-secondary btn-sm">
+                    Open bills
+                </a>
+            </div>
+
+            @if (latestPendingBill == null)
+            {
+                <div class="empty-state-panel">
+                    <i class="bi bi-check2-circle"></i>
+                    <strong>No pending postpaid bills</strong>
+                    <span>Your account is clear right now, and there are no unpaid postpaid bills to settle.</span>
+                </div>
+            }
+            else
+            {
+                <div class="table-card">
+
+                    @if (latestPendingBill.DueDate != null && latestPendingBill.DueDate < DateTime.Now)
+                    {
+                        <div class="status-note status-note-danger mb-3">
+                            This bill is overdue. Pay it now to clear the pending balance.
+                        </div>
+                    }
+                    else if (latestPendingBill.DueDate != null && latestPendingBill.DueDate <= DateTime.Now.AddDays(2))
+                    {
+                        <div class="status-note status-note-warning mb-3">
+                            This bill is due soon. Completing payment now will avoid it becoming overdue.
+                        </div>
+                    }
+
+                    <div class="row g-3">
+
+                        <div class="col-md-3">
+                            <p class="mb-1"><strong>Product</strong></p>
+                            <p class="mb-0">@(latestPendingBill.Product?.Name ?? "Postpaid service")</p>
+                        </div>
+
+                        <div class="col-md-3">
+                            <p class="mb-1"><strong>Phone number</strong></p>
+                            <p class="mb-0">@latestPendingBill.PhoneNumber</p>
+                        </div>
+
+                        <div class="col-md-2">
+                            <p class="mb-1"><strong>Amount</strong></p>
+                            <p class="mb-0">@latestPendingBill.Amount.ToString("N0") VND</p>
+                        </div>
+
+                        <div class="col-md-2">
+                            <p class="mb-1"><strong>Due date</strong></p>
+                            <p class="mb-0">@(latestPendingBill.DueDate?.ToString("dd/MM/yyyy") ?? "-")</p>
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <a asp-controller="UserTransaction"
+                                   asp-action="Pay"
+                                   asp-route-id="@latestPendingBill.Id"
+                                   class="btn btn-brand btn-sm w-100">
+                                Pay now
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function isClickIgnored(target) {
+                if (!target) {
+                    return false;
+                }
+
+                return Boolean(target.closest("a, button, input, select, textarea, label, summary"));
+            }
+
+            function openCard(card) {
+                const url = card?.dataset?.clickUrl;
+                if (!url) {
+                    return;
+                }
+
+                window.location.href = url;
+            }
+
+            document.addEventListener("click", function (event) {
+                if (isClickIgnored(event.target)) {
+                    return;
+                }
+
+                const card = event.target.closest(".is-clickable[data-click-url]");
+                if (!card) {
+                    return;
+                }
+
+                openCard(card);
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                }
+
+                const card = event.target.closest(".is-clickable[data-click-url]");
+                if (!card) {
+                    return;
+                }
+
+                event.preventDefault();
+                openCard(card);
+            });
+        });
+    </script>
+}

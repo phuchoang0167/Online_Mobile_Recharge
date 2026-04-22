@@ -1,0 +1,150 @@
+@model Online_Mobile_Recharge.Models.ViewModels.ManageCardsViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Manage Cards";
+}
+
+<div class="row g-4">
+    <div class="col-xl-5">
+        <div class="content-panel h-100">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                <div>
+                    <h2 class="display-font mb-2">@(Model.IsEditMode ? "Update Card" : "Add Card")</h2>
+                    <p class="text-muted mb-0">Save your cards here. During checkout or postpaid payment, you can select a saved card directly or enter the same details manually.</p>
+                </div>
+                @if (Model.IsEditMode)
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                }
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info">@TempData["InfoMessage"]</div>
+            }
+
+            <form asp-action="Save" method="post" class="d-grid gap-3">
+                <input asp-for="Form.Id" type="hidden" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger mb-0"></div>
+                }
+
+                <div>
+                    <label asp-for="Form.CardNumber" class="form-label">Card Number</label>
+                    <input asp-for="Form.CardNumber" class="form-control" inputmode="numeric" placeholder="16 digits" />
+                    <span asp-validation-for="Form.CardNumber" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Form.CVV" class="form-label">CVV</label>
+                        <input asp-for="Form.CVV" class="form-control" inputmode="numeric" placeholder="3 digits" />
+                        <span asp-validation-for="Form.CVV" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Form.Expiry" class="form-label">Expiry</label>
+                        <input asp-for="Form.Expiry" class="form-control" inputmode="numeric" placeholder="MM/YY" />
+                        <span asp-validation-for="Form.Expiry" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <strong>How this works</strong>
+                    <p class="mb-0 text-muted">Save one of cards. Its initial balance is set automatically from that list and will be deducted by payments.</p>
+                </div>
+
+                <button type="submit" class="btn btn-brand">@(Model.IsEditMode ? "Save Changes" : "Add Card")</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="content-panel h-100">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                <div>
+                    <h2 class="display-font mb-2">Saved Cards</h2>
+                    <p class="text-muted mb-0">Manage the cards you added for prepaid checkout and postpaid bill payment.</p>
+                </div>
+                <div class="soft-pill">
+                    <span>@Model.Cards.Count cards</span>
+                </div>
+            </div>
+
+            @if (!Model.Cards.Any())
+            {
+                <div class="empty-state-panel">
+                    <i class="bi bi-credit-card-2-front"></i>
+                    <strong>No saved cards yet</strong>
+                    <span>Add one of the sample cards from <code>doc/DEMO_DATA.md</code> to start testing payments.</span>
+                </div>
+            }
+            else
+            {
+                <div class="d-grid gap-3">
+                    @foreach (var card in Model.Cards)
+                    {
+                        var isExpired = card.ExpiryDate.Date < DateTime.Today;
+                        var isExpiringSoon = !isExpired && card.ExpiryDate.Date <= DateTime.Today.AddMonths(1);
+                        var last4 = card.CardNumber.Length >= 4 ? card.CardNumber[^4..] : card.CardNumber;
+
+                        <div class="table-card">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                                <div>
+                                    <strong>**** **** **** @last4</strong>
+                                    <p class="text-muted mb-0">Expires @card.ExpiryDate.ToString("MM/yy")</p>
+                                </div>
+
+                                @if (isExpired)
+                                {
+                                    <span class="badge bg-danger">Expired</span>
+                                }
+                                else if (isExpiringSoon)
+                                {
+                                    <span class="badge bg-warning text-dark">Expiring Soon</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Ready</span>
+                                }
+                            </div>
+
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Balance:</strong> @card.Balance.ToString("N0") VND</p>
+                                    <p class="mb-0 text-muted small">CVV: *** | Card ID: @card.Id | You can edit this card anytime.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2 justify-content-md-end flex-wrap align-items-center">
+                                        <a asp-action="Index" asp-route-editId="@card.Id" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                        <form asp-action="Delete" asp-route-id="@card.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    data-confirm-title="Delete card"
+                                                    data-confirm-message="Are you sure you want to delete this saved card?">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

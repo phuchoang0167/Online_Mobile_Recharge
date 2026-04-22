@@ -1,0 +1,126 @@
+@model List<Online_Mobile_Recharge.Models.Entities.Feedback>
+@using Online_Mobile_Recharge.Services
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Feedback Management";
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="display-font mb-2">Feedback Management</h2>
+            <p class="text-muted mb-0">Review product feedback, support messages, and who submitted them.</p>
+        </div>
+        <div class="soft-pill">
+            <span>@Model.Count feedback items</span>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">No feedback has been submitted yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Sender</th>
+                        <th>Product</th>
+                        <th>Edit Status</th>
+                        <th>Message</th>
+                        <th>Admin Reply</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var isProductReview = item.Category == FeedbackService.ProductReviewCategory;
+                        var canStillEdit = isProductReview && DateTime.Now <= item.CreatedAt.AddDays(1);
+
+                        <tr>
+                            <td>
+                                <span class="badge @(isProductReview ? "bg-info text-dark" : "bg-secondary")">
+                                    @(isProductReview ? "Product Review" : "Support")
+                                </span>
+                            </td>
+                            <td>
+                                <strong>@(item.User?.Name ?? item.Name)</strong>
+                                <div class="small text-muted">@item.Email</div>
+                            </td>
+                            <td>
+                                @if (item.Product != null)
+                                {
+                                    <div>@item.Product.Name</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">General Support</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!isProductReview)
+                                {
+                                    <span class="text-muted">Not Applicable</span>
+                                }
+                                else if (canStillEdit)
+                                {
+                                    <span class="badge bg-warning text-dark">Editable</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark">Locked</span>
+                                }
+                            </td>
+                            <td style="min-width: 280px;">@item.Message</td>
+                            <td style="min-width: 320px;">
+                                @if (!string.IsNullOrWhiteSpace(item.AdminReply))
+                                {
+                                    <div class="table-card p-3 mb-3">
+                                        <strong class="d-block mb-1">Latest reply</strong>
+                                        <p class="mb-2">@item.AdminReply</p>
+                                        <div class="small text-muted">
+                                            Replied @item.AdminRepliedAt?.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </div>
+                                }
+
+                                <form asp-action="ReplyFeedback" method="post" class="d-grid gap-2 admin-reply-form">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <textarea name="adminReply"
+                                              class="form-control"
+                                              rows="3"
+                                              maxlength="1500"
+                                              placeholder="Write a short reply for this feedback...">@item.AdminReply</textarea>
+                                    <button type="submit" class="btn btn-outline-dark btn-sm align-self-start">
+                                        @(string.IsNullOrWhiteSpace(item.AdminReply) ? "Send reply" : "Update reply")
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <div>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                @if (item.UpdatedAt != null)
+                                {
+                                    <div class="small text-muted">Updated @item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

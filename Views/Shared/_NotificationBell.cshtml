@@ -1,0 +1,88 @@
+@model Online_Mobile_Recharge.Models.ViewModels.NotificationBellViewModel
+
+@{
+    Context.Request.Cookies.TryGetValue(Model.CookieKey, out var seenSignature);
+    var hideBadge = Model.Count > 0 && string.Equals(seenSignature, Model.Signature, StringComparison.Ordinal);
+}
+
+<div class="dropdown notification-bell">
+    <button class="btn bell-trigger"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bell-storage-key="@Model.StorageKey"
+            data-bell-cookie-key="@Model.CookieKey"
+            data-bell-signature="@Model.Signature"
+            aria-expanded="false">
+        <i class="bi bi-bell"></i>
+        @if (Model.Count > 0)
+        {
+            <span class="bell-badge @(hideBadge ? "d-none" : null)">@Model.Count</span>
+        }
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end bell-menu border-0 shadow-lg">
+        <div class="bell-menu-header">
+            <strong>@Model.Heading</strong>
+            <span class="small text-muted">@Model.Count item(s)</span>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="bell-empty">
+                <i class="bi bi-check2-circle"></i>
+                <span>No new notifications right now.</span>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.Items)
+            {
+                <a class="dropdown-item bell-item" href="@item.Url">
+                    <span class="bell-icon bell-@item.Tone">
+                        <i class="bi @item.Icon"></i>
+                    </span>
+                    <span class="bell-copy">
+                        <strong>@item.Title</strong>
+                        <small>@item.Description</small>
+                    </span>
+                </a>
+            }
+        }
+    </div>
+</div>
+
+<script>
+    (function () {
+        const bell = document.currentScript.previousElementSibling;
+        if (!bell || !bell.classList.contains("notification-bell")) {
+            return;
+        }
+
+        const trigger = bell.querySelector(".bell-trigger");
+        const badge = bell.querySelector(".bell-badge");
+        if (!trigger || !badge) {
+            return;
+        }
+
+        const storageKey = trigger.dataset.bellStorageKey;
+        const cookieKey = trigger.dataset.bellCookieKey;
+        const signature = trigger.dataset.bellSignature;
+
+        function getCookieValue(name) {
+            const cookie = document.cookie
+                .split("; ")
+                .find(function (entry) { return entry.startsWith(name + "="); });
+
+            return cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : null;
+        }
+
+        try {
+            const seenSignature = (storageKey ? window.localStorage.getItem(storageKey) : null) || getCookieValue(cookieKey);
+            if (seenSignature === signature) {
+                badge.classList.add("d-none");
+            }
+        } catch {
+            // Ignore storage access issues and keep the server-rendered state.
+        }
+    })();
+</script>

@@ -1,0 +1,295 @@
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Transaction Management";
+}
+
+@using Online_Mobile_Recharge.Models.Enums
+@model Online_Mobile_Recharge.Models.ViewModels.AdminTransactionHistoryViewModel
+
+<div>
+    <div class="content-panel mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+            <div>
+                <h2 class="display-font mb-2">Transaction Management</h2>
+                <p class="text-muted mb-0">Select a user to review their prepaid and postpaid transaction history.</p>
+            </div>
+            <div class="soft-pill">@Model.Users.Count user(s)</div>
+        </div>
+
+        <form method="get" class="mb-0">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input name="keyword"
+                           value="@Model.Keyword"
+                           class="form-control"
+                           placeholder="Search phone or product..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="all" selected="@(Model.Status == "all")">All statuses</option>
+                        <option value="Success" selected="@(Model.Status == "Success")">Success</option>
+                        <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                        <option value="Failed" selected="@(Model.Status == "Failed")">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="range" class="form-select">
+                        <option value="all" selected="@(Model.Range == "all")">All time</option>
+                        <option value="today" selected="@(Model.Range == "today")">Today</option>
+                        <option value="7days" selected="@(Model.Range == "7days")">Last 7 days</option>
+                        <option value="30days" selected="@(Model.Range == "30days")">Last 30 days</option>
+                        <option value="overdue" selected="@(Model.Range == "overdue")">Overdue only</option>
+                        <option value="duesoon" selected="@(Model.Range == "duesoon")">Due soon</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-brand w-100">Apply</button>
+                </div>
+                <div class="col-md-1">
+                    <a asp-action="Index" asp-route-userId="@Model.SelectedUserId" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </div>
+
+            @if (Model.SelectedUserId != null)
+            {
+                <input type="hidden" name="userId" value="@Model.SelectedUserId" />
+            }
+        </form>
+    </div>
+
+    <div class="content-panel mb-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+            <div>
+                <h4 class="display-font mb-1">Users</h4>
+                <p class="text-muted mb-0">Click a user to load their transaction history.</p>
+            </div>
+            @if (Model.SelectedUser != null)
+            {
+                <div class="soft-pill">
+                    <i class="bi bi-person-check"></i>
+                    <span>@Model.SelectedUser.Name</span>
+                </div>
+            }
+        </div>
+
+        <div data-view-more data-view-more-initial="8" data-view-more-step="8">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 app-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th style="width: 140px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            var isSelected = Model.SelectedUserId != null && user.Id == Model.SelectedUserId;
+                            <tr data-view-more-item class="@(isSelected ? "table-primary" : string.Empty)">
+                                <td>@user.Id</td>
+                                <td>@user.Name</td>
+                                <td>@user.Email</td>
+                                <td>@user.PhoneNumber</td>
+                                <td>
+                                    <a asp-action="Index"
+                                       asp-route-userId="@user.Id"
+                                       asp-route-keyword="@Model.Keyword"
+                                       asp-route-status="@Model.Status"
+                                       asp-route-range="@Model.Range"
+                                       class="btn btn-outline-secondary btn-sm">
+                                        View history
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-link view-more-btn" data-view-more-button>View more</button>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.SelectedUser == null)
+    {
+        <div class="empty-state-panel">
+            <i class="bi bi-receipt"></i>
+            <strong>Select a user to view history</strong>
+            <span>Choose a user above to load their prepaid and postpaid transactions.</span>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-xl-6">
+                <div class="content-panel h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                        <div>
+                            <h4 class="display-font mb-1">Postpaid</h4>
+                            <p class="text-muted mb-0">Bills, due dates, and settlement status.</p>
+                        </div>
+                        <div class="soft-pill">@Model.PostpaidTransactions.Count transaction(s)</div>
+                    </div>
+
+                    @if (!Model.PostpaidTransactions.Any())
+                    {
+                        <div class="empty-state-panel empty-state-inline">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <strong>No postpaid transactions</strong>
+                            <span>This user has not created any postpaid bills yet.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div data-view-more data-view-more-initial="10" data-view-more-step="10">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 app-table">
+                                     <thead>
+                                         <tr>
+                                             <th>Phone</th>
+                                             <th>Product</th>
+                                             <th>Amount</th>
+                                             <th>CCCD</th>
+                                             <th>Status</th>
+                                             <th>Due</th>
+                                             <th>Date</th>
+                                         </tr>
+                                     </thead>
+                                    <tbody>
+                                        @foreach (var transaction in Model.PostpaidTransactions)
+                                        {
+                                            var isOverdue = transaction.Status == TransactionStatus.Pending &&
+                                                            transaction.DueDate != null &&
+                                                            transaction.DueDate < DateTime.Now;
+                                            var isDueSoon = transaction.Status == TransactionStatus.Pending &&
+                                                            transaction.DueDate != null &&
+                                                            transaction.DueDate >= DateTime.Now &&
+                                                            transaction.DueDate <= DateTime.Now.AddDays(2);
+
+                                             <tr data-view-more-item class="@(isOverdue ? "table-danger" : string.Empty)">
+                                                 <td>@transaction.PhoneNumber</td>
+                                                 <td>@(transaction.Product?.Name ?? "-")</td>
+                                                 <td>@transaction.Amount.ToString("N0") VND</td>
+                                                 <td>@(string.IsNullOrWhiteSpace(transaction.PostpaidNationalId) ? "-" : transaction.PostpaidNationalId)</td>
+                                                 <td>
+                                                     @if (transaction.Status == TransactionStatus.Success)
+                                                     {
+                                                         <span class="badge bg-success">Success</span>
+                                                     }
+                                                    else if (transaction.Status == TransactionStatus.Pending)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Failed</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (transaction.DueDate == null)
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div>@transaction.DueDate?.ToString("dd/MM/yyyy HH:mm")</div>
+                                                        @if (isOverdue)
+                                                        {
+                                                            <span class="badge bg-danger mt-1">Overdue</span>
+                                                        }
+                                                        else if (isDueSoon)
+                                                        {
+                                                            <span class="badge bg-warning text-dark mt-1">Due soon</span>
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>@transaction.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-link view-more-btn" data-view-more-button>View more</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-xl-6">
+                <div class="content-panel h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                        <div>
+                            <h4 class="display-font mb-1">Prepaid</h4>
+                            <p class="text-muted mb-0">Top-ups and package purchases.</p>
+                        </div>
+                        <div class="soft-pill">@Model.PrepaidTransactions.Count transaction(s)</div>
+                    </div>
+
+                    @if (!Model.PrepaidTransactions.Any())
+                    {
+                        <div class="empty-state-panel empty-state-inline">
+                            <i class="bi bi-bag"></i>
+                            <strong>No prepaid transactions</strong>
+                            <span>This user has not completed any prepaid checkout yet.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div data-view-more data-view-more-initial="10" data-view-more-step="10">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 app-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Phone</th>
+                                            <th>Product</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var transaction in Model.PrepaidTransactions)
+                                        {
+                                            <tr data-view-more-item>
+                                                <td>@transaction.PhoneNumber</td>
+                                                <td>@(transaction.Product?.Name ?? "-")</td>
+                                                <td>@transaction.Amount.ToString("N0") VND</td>
+                                                <td>
+                                                    @if (transaction.Status == TransactionStatus.Success)
+                                                    {
+                                                        <span class="badge bg-success">Success</span>
+                                                    }
+                                                    else if (transaction.Status == TransactionStatus.Pending)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Failed</span>
+                                                    }
+                                                </td>
+                                                <td>@transaction.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-link view-more-btn" data-view-more-button>View more</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

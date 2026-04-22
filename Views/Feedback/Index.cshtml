@@ -1,0 +1,104 @@
+@model FeedbackCenterViewModel
+
+@{
+    ViewData["Title"] = "My Feedback";
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">My Feedback</span>
+            <h1 class="display-font">Feedback only for products you purchased successfully.</h1>
+            <p class="lead-copy">
+                Product feedback is submitted directly on the product detail page, and you can update your own message within 1 day.
+            </p>
+        </div>
+
+        <div class="info-card">
+            <strong>Feedback status</strong>
+            @if (Model.IsLoggedIn)
+            {
+                <p class="mb-1">Purchased products: @Model.PurchasedProductsCount</p>
+                <p class="mb-0">Submitted feedback: @Model.MyFeedbacks.Count</p>
+            }
+            else
+            {
+                <p class="mb-0">Sign in to view your feedback and the products eligible for review.</p>
+            }
+        </div>
+    </div>
+
+    @if (!Model.IsLoggedIn)
+    {
+        <div class="content-panel">
+            <div class="empty-state-panel">
+                <i class="bi bi-person-lock"></i>
+                <strong>Sign in to view your feedback</strong>
+                <span>After you sign in, you can review your submitted product feedback and check admin replies.</span>
+            </div>
+        </div>
+    }
+    else if (!Model.MyFeedbacks.Any())
+    {
+        <div class="content-panel">
+            <div class="empty-state-panel">
+                <i class="bi bi-chat-square-text"></i>
+                <strong>No feedback submitted yet</strong>
+                <span>After a successful purchase, open the product detail page to leave your first review.</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="content-panel">
+            <h3 class="display-font mb-3">My feedback</h3>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 app-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Feedback</th>
+                            <th>Admin Reply</th>
+                            <th>Created</th>
+                            <th>Updated</th>
+                            <th style="width: 160px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.MyFeedbacks)
+                        {
+                            var canEdit = DateTime.Now <= item.CreatedAt.AddDays(1);
+
+                            <tr>
+                                <td>@item.Product?.Name</td>
+                                <td>@item.Message</td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(item.AdminReply))
+                                    {
+                                        <span class="text-muted">No reply yet</span>
+                                    }
+                                    else
+                                    {
+                                        <div>@item.AdminReply</div>
+                                        <div class="small text-muted">Replied @item.AdminRepliedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                                    }
+                                </td>
+                                <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                <td>
+                                    @if (item.ProductId != null)
+                                    {
+                                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId" class="btn btn-brand btn-sm">
+                                            @(canEdit ? "Open review" : "View review")
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</section>

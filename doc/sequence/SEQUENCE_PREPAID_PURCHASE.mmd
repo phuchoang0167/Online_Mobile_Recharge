@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant Product as Product View
+    participant Checkout as Checkout View
+    participant ProductController as ProductController
+    participant CheckoutController as CheckoutController
+    participant TxService as TransactionService
+    participant DB as Database
+    participant Success as Success View
+
+    User->>Product: Click Buy
+    Product->>ProductController: GET /Product/Buy/{id}
+    ProductController-->>Checkout: Redirect to checkout
+
+    User->>Checkout: Confirm selected phone + payment info
+    Checkout->>CheckoutController: POST /Checkout/Process
+    CheckoutController->>TxService: Process prepaid transaction
+    TxService->>DB: Load product + card/user data
+    DB-->>TxService: Product + card
+    TxService->>DB: Validate balance/CVV/expiry
+    DB-->>TxService: Validation result
+
+    alt Payment success
+        TxService->>DB: Save transaction Success
+        DB-->>TxService: Saved
+        TxService-->>CheckoutController: Success result
+        CheckoutController-->>Success: Redirect to success page
+    else Payment fail
+        TxService-->>CheckoutController: Error result
+        CheckoutController-->>Checkout: Return form with error
+    end

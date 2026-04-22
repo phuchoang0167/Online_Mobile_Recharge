@@ -1,0 +1,73 @@
+@model Online_Mobile_Recharge.Models.ViewModels.ActiveDataPackagesViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Active data packages";
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+    <div>
+        <h2 class="display-font mb-2">Active data packages</h2>
+        <p class="text-muted mb-0">All data packages that are still valid for the phone numbers you purchased.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="Product" asp-action="Index" class="btn btn-brand">Buy a package</a>
+        <a asp-controller="UserTransaction" asp-action="Index" class="btn btn-outline-secondary">View transactions</a>
+    </div>
+</div>
+
+@if (Model.Groups.Count == 0)
+{
+    <div class="empty-state-panel">
+        <i class="bi bi-wifi-off"></i>
+        <strong>No active data packages</strong>
+        <span>Purchase a data package to start tracking its validity window here.</span>
+    </div>
+}
+else
+{
+    foreach (var group in Model.Groups)
+    {
+        <div class="content-panel mb-4">
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <h4 class="display-font mb-0">@group.PhoneNumber</h4>
+                <span class="soft-pill">@group.Items.Count package(s)</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Package</th>
+                            <th>Activated</th>
+                            <th>Expires</th>
+                            <th class="text-end">Remaining</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in group.Items)
+                        {
+                            var remaining = item.ExpiresAt - Model.Now;
+                            var remainingLabel = remaining.TotalDays < 1
+                                ? $"{Math.Max(0, (int)Math.Ceiling(remaining.TotalHours))} hour(s)"
+                                : $"{Math.Max(0, (int)Math.Ceiling(remaining.TotalDays))} day(s)";
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.ProductName</div>
+                                    <div class="text-muted small">#@item.ProductId</div>
+                                </td>
+                                <td>@item.ActivatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.ExpiresAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <span class="soft-pill">@remainingLabel</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+

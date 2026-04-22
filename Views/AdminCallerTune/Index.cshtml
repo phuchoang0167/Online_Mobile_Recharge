@@ -1,0 +1,112 @@
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Caller Tunes";
+}
+@using Online_Mobile_Recharge.Models.Entities
+@model List<CallerTune>
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="mb-2 display-font">Caller Tune Catalog</h2>
+            <p class="text-muted mb-0">Add MP3 files to the shared catalog. Users with an active monthly plan can select one tune to use.</p>
+        </div>
+        <span class="soft-pill">@Model.Count tune(s)</span>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="table-card mb-4">
+        <form asp-controller="AdminCallerTune" asp-action="Upload" method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
+            @Html.AntiForgeryToken()
+            <div class="col-lg-5">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" maxlength="200" required />
+            </div>
+            <div class="col-lg-5">
+                <label class="form-label">MP3 file</label>
+                <input type="file" name="file" accept=".mp3" class="form-control" required />
+            </div>
+            <div class="col-lg-2 d-grid">
+                <button class="btn btn-brand">Add to catalog</button>
+            </div>
+        </form>
+        <small class="text-muted d-block mt-2">Only MP3 files are supported, up to 5MB per upload.</small>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">No caller tunes in catalog yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Preview</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th style="width:220px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var tune in Model)
+                    {
+                        <tr class="@(tune.IsActive ? "" : "table-light")">
+                            <td>
+                                <strong>@tune.Title</strong>
+                            </td>
+                            <td>
+                                <audio controls style="width:220px;">
+                                    <source src="@tune.FilePath" type="audio/mpeg" />
+                                </audio>
+                            </td>
+                            <td>
+                                @if (tune.IsActive)
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Hidden</span>
+                                }
+                            </td>
+                            <td>@tune.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <form asp-controller="AdminCallerTune" asp-action="Toggle" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@tune.Id" />
+                                        <button class="btn btn-sm @(tune.IsActive ? "btn-outline-secondary" : "btn-success")">
+                                            @(tune.IsActive ? "Hide" : "Show")
+                                        </button>
+                                    </form>
+
+                                    <form asp-controller="AdminCallerTune" asp-action="Delete" method="post" data-confirm-title="Delete caller tune" data-confirm-message="Are you sure you want to delete this tune from catalog?">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@tune.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+

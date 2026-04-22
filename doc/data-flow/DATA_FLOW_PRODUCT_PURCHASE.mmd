@@ -1,0 +1,24 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    U[User]
+    PV((Product List + Detail))
+    CV((Checkout View))
+    SV((Success Page))
+
+    PC((ProductController))
+    CC((CheckoutController))
+    TS((TransactionService))
+    FS((FeedbackService))
+
+    DB[(Products / ProductSales / Sales / Transactions / Cards / Feedbacks)]
+
+    U --> PV --> PC --> DB
+    DB --> PC --> PV
+
+    U --> CV --> CC --> TS --> DB
+    DB --> TS --> CC --> SV
+
+    %% Feedback is available after successful purchase
+    PV --> PC --> FS --> DB
+    DB --> FS --> PC --> PV

@@ -1,0 +1,73 @@
+@using Online_Mobile_Recharge.Models.Entities
+@using Online_Mobile_Recharge.Models.Enums
+
+@{
+    ViewData["Title"] = "Guest Checkout";
+    var product = ViewBag.Product as Product;
+    var phone = ViewBag.Phone as string ?? string.Empty;
+}
+
+@if (product == null)
+{
+    <div class="alert alert-danger">Product not found.</div>
+    return;
+}
+
+<div class="container mt-5">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="content-panel h-100">
+                <span class="badge text-bg-dark mb-3">Guest Checkout</span>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="ui-icon-bubble"><i class="bi bi-bag-check"></i></span>
+                    <h3 class="display-font mb-0">@product.Name</h3>
+                </div>
+                <p class="text-muted mb-4">@product.Description</p>
+
+                <div class="table-card mb-3 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Topup amount</span>
+                    <strong class="fs-4 text-danger">@product.Price.ToString("N0") VND</strong>
+                </div>
+
+                <div class="table-card">
+                    <div class="text-muted small">Selected phone number</div>
+                    <strong class="d-block mt-1">@((string.IsNullOrWhiteSpace(phone)) ? "Not set yet" : phone)</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="content-panel">
+                <h3 class="display-font mb-3">Pay with card</h3>
+                <p class="text-muted mb-4">Guest checkout only supports prepaid topup using manual card entry.</p>
+
+                <form asp-action="Pay" method="post" class="d-grid gap-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@product.Id" />
+
+                    <div>
+                        <label class="form-label" for="phone">Phone number</label>
+                        <input class="form-control" id="phone" name="phone" value="@phone" inputmode="numeric" autocomplete="tel" placeholder="0xxxxxxxxx" required />
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label" for="cardNumber">Card number</label>
+                            <input class="form-control" id="cardNumber" name="cardNumber" inputmode="numeric" placeholder="16 digits" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="expiry">Expiry (MM/YY)</label>
+                            <input class="form-control" id="expiry" name="expiry" placeholder="MM/YY" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="cvv">CVV</label>
+                            <input class="form-control" id="cvv" name="cvv" inputmode="numeric" placeholder="3 digits" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-brand btn-lg">Complete topup</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

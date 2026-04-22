@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor User
+    actor Admin
+    participant Product as Product Detail View
+    participant AdminView as Admin Feedbacks View
+    participant FeedbackController as FeedbackController
+    participant AdminController as AdminController
+    participant FeedbackService as FeedbackService
+    participant DB as Database
+
+    User->>Product: Submit product feedback
+    Product->>FeedbackController: POST /Feedback/Upsert
+    FeedbackController->>FeedbackService: Validate purchase + edit window
+    FeedbackService->>DB: Check successful transaction + current feedback
+    DB-->>FeedbackService: Result
+
+    alt Allowed
+        FeedbackService->>DB: Insert or update feedback
+        DB-->>FeedbackService: Saved
+        FeedbackService-->>FeedbackController: Success
+        FeedbackController-->>Product: Redirect to product detail
+    else Not allowed
+        FeedbackService-->>FeedbackController: Validation error
+        FeedbackController-->>Product: Redirect with error
+    end
+
+    Admin->>AdminView: Submit admin reply
+    AdminView->>AdminController: POST /Admin/ReplyFeedback
+    AdminController->>DB: Find feedback by id
+    DB-->>AdminController: Feedback record
+    AdminController->>DB: Save AdminReply + AdminRepliedAt
+    DB-->>AdminController: Updated
+    AdminController-->>AdminView: Redirect with success message

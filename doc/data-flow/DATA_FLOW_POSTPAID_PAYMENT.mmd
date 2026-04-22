@@ -1,0 +1,23 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    U[User]
+    CV((Checkout View))
+    HV((Transaction History + Pay Bill))
+
+    CC((CheckoutController))
+    UTC((UserTransactionController))
+    TS((TransactionService))
+    ENS((EmailNotificationService))
+
+    DB[(Transactions / Users / Cards / Products)]
+
+    U --> CV --> CC --> TS --> DB
+    DB --> TS --> CC
+
+    %% Postpaid: requires NationalId + BillingAddress + AgreeToTerms (stored per Transaction and also saved to User profile)
+    CC --> ENS
+    ENS --> U
+
+    U --> HV --> UTC --> TS --> DB
+    DB --> TS --> UTC --> HV

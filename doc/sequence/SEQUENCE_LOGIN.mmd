@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor User
+    participant View as Login View
+    participant Account as AccountController
+    participant Password as PasswordHelper
+    participant DB as Database
+    participant Session as Session/Cookie
+
+    User->>View: Enter email and password
+    View->>Account: POST /Account/Login
+    Account->>DB: Find user by normalized email
+    DB-->>Account: User record
+    Account->>Password: Verify password hash
+    Password-->>Account: Valid / Invalid
+
+    alt Valid account
+        Account->>Session: Set UserId, Role, Name
+        Session-->>Account: Authenticated
+        Account-->>View: Redirect to dashboard
+    else Invalid or blocked account
+        Account-->>View: Return login with error
+    end

@@ -1,0 +1,36 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    U[User]
+    A[Admin]
+    UI((ASP.NET MVC Views))
+    C((Controllers))
+    S((Services))
+    DB[(SQL Server Database)]
+    SMTP[Email]
+
+    U --> UI
+    A --> UI
+    UI --> C
+    C --> S
+    C --> DB
+    S --> DB
+    S --> SMTP
+    DB --> C
+    C --> UI
+
+    subgraph Main Domains
+        AUTH((Auth))
+        PRODUCT((Products))
+        CHECKOUT((Checkout))
+        TRANSACTION((Transactions))
+        FEEDBACK((Feedback))
+        PROFILE((Profile / Cards / DND / Caller Tune))
+    end
+
+    C --> AUTH
+    C --> PRODUCT
+    C --> CHECKOUT
+    C --> TRANSACTION
+    C --> FEEDBACK
+    C --> PROFILE

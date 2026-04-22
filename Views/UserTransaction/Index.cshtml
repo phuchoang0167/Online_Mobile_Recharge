@@ -1,0 +1,341 @@
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Transaction History";
+}
+@model Online_Mobile_Recharge.Models.ViewModels.TransactionListViewModel
+@using Online_Mobile_Recharge.Models.Enums
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h3 class="display-font mb-2">Transaction History</h3>
+            <p class="text-muted mb-0">Track prepaid purchases, postpaid bills, and every payment that still needs your attention.</p>
+        </div>
+    </div>
+
+    @{
+        var overdueCount = Model.Items.Count(x =>
+            x.Type == TransactionType.Postpaid &&
+            x.Status == TransactionStatus.Pending &&
+            x.DueDate != null &&
+            x.DueDate < DateTime.Now);
+        var dueSoonCount = Model.Items.Count(x =>
+            x.Type == TransactionType.Postpaid &&
+            x.Status == TransactionStatus.Pending &&
+            x.DueDate != null &&
+            x.DueDate >= DateTime.Now &&
+            x.DueDate <= DateTime.Now.AddDays(2));
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (overdueCount > 0)
+    {
+        <div class="status-note status-note-danger mb-4">
+            <strong>Overdue reminder:</strong> You have @overdueCount overdue postpaid bill(s). Please settle them first.
+        </div>
+    }
+    else if (dueSoonCount > 0)
+    {
+        <div class="status-note status-note-warning mb-4">
+            <strong>Due soon:</strong> You have @dueSoonCount postpaid bill(s) reaching the due date within 2 days.
+        </div>
+    }
+
+    <form method="get" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input name="keyword"
+                       value="@Model.Keyword"
+                       class="form-control"
+                       placeholder="Search phone number (postpaid) or product..." />
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="all" selected="@(Model.Status == "all")">All statuses</option>
+                    <option value="Success" selected="@(Model.Status == "Success")">Paid</option>
+                    <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                    <option value="Failed" selected="@(Model.Status == "Failed")">Failed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="type" class="form-select">
+                    <option value="all" selected="@(Model.Type == "all")">All types</option>
+                    <option value="Prepaid" selected="@(Model.Type == "Prepaid")">Prepaid</option>
+                    <option value="Postpaid" selected="@(Model.Type == "Postpaid")">Postpaid</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="range" class="form-select">
+                    <option value="all" selected="@(Model.Range == "all")">All time</option>
+                    <option value="today" selected="@(Model.Range == "today")">Today</option>
+                    <option value="7days" selected="@(Model.Range == "7days")">Last 7 days</option>
+                    <option value="30days" selected="@(Model.Range == "30days")">Last 30 days</option>
+                    <option value="overdue" selected="@(Model.Range == "overdue")">Overdue only</option>
+                    <option value="duesoon" selected="@(Model.Range == "duesoon")">Due soon</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-brand w-100">Apply</button>
+            </div>
+            <div class="col-md-1">
+                <a asp-action="Index" class="btn btn-outline-secondary w-100">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <div data-view-more data-view-more-initial="10" data-view-more-step="10">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead>
+                    <tr>
+                        <th>Phone Number</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Created</th>
+                        <th style="width: 320px;">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                        var isOverdue = item.Type == TransactionType.Postpaid &&
+                                        item.Status == TransactionStatus.Pending &&
+                                        item.DueDate != null &&
+                                        item.DueDate < DateTime.Now;
+                        var isDueSoon = item.Type == TransactionType.Postpaid &&
+                                        item.Status == TransactionStatus.Pending &&
+                                        item.DueDate != null &&
+                                        item.DueDate >= DateTime.Now &&
+                                        item.DueDate <= DateTime.Now.AddDays(2);
+
+                        <tr data-view-more-item>
+                            <td>@item.PhoneNumber</td>
+                            <td>@item.Amount.ToString("N0") VND</td>
+                            <td>
+                                @if (item.Type == TransactionType.Postpaid)
+                                {
+                                    <span class="badge bg-warning text-dark">Postpaid</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Prepaid</span>
+                                }
+                            </td>
+                            <td>@item.PaymentMethod</td>
+                            <td>
+                                @if (item.Status == TransactionStatus.Success)
+                                {
+                                    <span class="badge bg-success">Paid</span>
+                                }
+                                else if (item.Status == TransactionStatus.Failed)
+                                {
+                                    <span class="badge bg-danger">Failed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Pending</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.DueDate == null)
+                                {
+                                    <span>-</span>
+                                }
+                                else
+                                {
+                                    <div>@item.DueDate?.ToString("dd/MM/yyyy HH:mm")</div>
+                                    @if (isOverdue)
+                                    {
+                                        <span class="badge bg-danger mt-1">Overdue</span>
+                                    }
+                                    else if (isDueSoon)
+                                    {
+                                        <span class="badge bg-warning text-dark mt-1">Due soon</span>
+                                    }
+                                }
+                            </td>
+                            <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (item.Type == TransactionType.Postpaid && item.Status == TransactionStatus.Pending)
+                                {
+                                    <div class="transaction-actions-stack">
+                                        <div class="d-flex">
+                                            <button type="button"
+                                                    class="btn btn-brand btn-sm"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#inlinePay_@item.Id"
+                                                    aria-expanded="false"
+                                                    aria-controls="inlinePay_@item.Id">
+                                                Pay now
+                                            </button>
+                                        </div>
+
+                                        <div class="collapse mt-2" id="inlinePay_@item.Id">
+                                            <div class="table-card p-3">
+                                                <form asp-controller="UserTransaction" asp-action="Pay" method="post" class="d-grid gap-2 inline-postpaid-pay-form">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="TransactionId" value="@item.Id" />
+                                                    <input type="hidden" name="inline" value="true" />
+
+                                                    @if (Model.SavedCards != null && Model.SavedCards.Any())
+                                                    {
+                                                        <div class="d-flex gap-3 flex-wrap">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input"
+                                                                       type="radio"
+                                                                       name="CardInputMode"
+                                                                       id="cardModeSaved_@item.Id"
+                                                                       value="saved"
+                                                                       checked />
+                                                                <label class="form-check-label" for="cardModeSaved_@item.Id">Saved card</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input"
+                                                                       type="radio"
+                                                                       name="CardInputMode"
+                                                                       id="cardModeManual_@item.Id"
+                                                                       value="manual" />
+                                                                <label class="form-check-label" for="cardModeManual_@item.Id">Another card</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="inline-pay-saved" data-inline-pay-saved="@item.Id">
+                                                            <label class="form-label" for="SavedCardId_@item.Id">Saved cards</label>
+                                                            <select class="form-select" id="SavedCardId_@item.Id" name="SavedCardId">
+                                                                @foreach (var card in Model.SavedCards)
+                                                                {
+                                                                    <option value="@card.Id" selected="@(card.Id == Model.DefaultSavedCardId ? "selected" : null)">@card.Label</option>
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="hidden" name="CardInputMode" value="manual" />
+                                                    }
+
+                                                    <div class="inline-pay-manual" data-inline-pay-manual="@item.Id">
+                                                        <div class="row g-2">
+                                                            <div class="col-12">
+                                                                <label class="form-label" for="CardNumber_@item.Id">Card number</label>
+                                                                <input class="form-control" id="CardNumber_@item.Id" name="CardNumber" inputmode="numeric" placeholder="16 digits" />
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label" for="Expiry_@item.Id">Expiry</label>
+                                                                <input class="form-control" id="Expiry_@item.Id" name="Expiry" placeholder="MM/YY" inputmode="numeric" />
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label" for="CVV_@item.Id">CVV</label>
+                                                                <input class="form-control" id="CVV_@item.Id" name="CVV" placeholder="3 digits" inputmode="numeric" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex gap-2 flex-wrap mt-1">
+                                                        <button type="submit" class="btn btn-brand btn-sm">Confirm payment</button>
+                                                        <a asp-controller="UserTransaction" asp-action="Pay" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
+                                                            Open full page
+                                                        </a>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 flex-nowrap transaction-actions-row">
+                                            <a asp-controller="UserTransaction" asp-action="Invoice" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                                Bill PDF
+                                            </a>
+                                            <form asp-controller="UserTransaction" asp-action="SendReminder" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                    Send reminder
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                                else if (item.ProductId != null && item.Status == TransactionStatus.Success)
+                                {
+                                    <div class="d-flex gap-2 flex-nowrap transaction-actions">
+                                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@item.ProductId" class="btn btn-outline-secondary btn-sm">
+                                            Open product
+                                        </a>
+                                        <a asp-controller="UserTransaction" asp-action="Invoice" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                            Bill PDF
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex gap-2 flex-nowrap transaction-actions">
+                                        <a asp-controller="UserTransaction" asp-action="Invoice" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                            Bill PDF
+                                        </a>
+                                        <span class="text-muted small align-self-center">Completed</span>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state-panel empty-state-inline">
+                                    <i class="bi bi-receipt"></i>
+                                    <strong>No matching transactions</strong>
+                                    <span>Try a different keyword or a wider time range to find the transaction you need.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-link view-more-btn" data-view-more-button>View more</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".inline-postpaid-pay-form").forEach(function (form) {
+                const transactionId = (form.querySelector("input[name='TransactionId']") || {}).value;
+                if (!transactionId) return;
+
+                const savedWrap = document.querySelector("[data-inline-pay-saved='" + transactionId + "']");
+                const manualWrap = document.querySelector("[data-inline-pay-manual='" + transactionId + "']");
+                const savedRadio = document.getElementById("cardModeSaved_" + transactionId);
+                const manualRadio = document.getElementById("cardModeManual_" + transactionId);
+
+                function toggleMode() {
+                    const useSaved = savedRadio && savedRadio.checked;
+                    if (savedWrap) savedWrap.classList.toggle("d-none", !useSaved);
+                    if (manualWrap) manualWrap.classList.toggle("d-none", useSaved);
+                }
+
+                if (savedRadio) savedRadio.addEventListener("change", toggleMode);
+                if (manualRadio) manualRadio.addEventListener("change", toggleMode);
+                toggleMode();
+            });
+        });
+    </script>
+}

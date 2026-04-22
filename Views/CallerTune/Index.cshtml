@@ -1,0 +1,141 @@
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Caller Tune";
+}
+@using Online_Mobile_Recharge.Models.ViewModels
+@model CallerTunePageViewModel
+
+@{
+    var selectedTune = Model.SelectedCallerTuneId == null
+        ? null
+        : Model.Tunes.FirstOrDefault(x => x.Id == Model.SelectedCallerTuneId.Value);
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="mb-2 display-font">Caller Tune</h2>
+            <p class="text-muted mb-0">Subscribe monthly, then pick one tune from the admin catalog to use.</p>
+        </div>
+        <span class="soft-pill">@Model.Tunes.Count tune(s)</span>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="table-card mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <div class="mb-1">
+                    @if (Model.CallerTuneEnabled && selectedTune != null)
+                    {
+                        <span class="badge bg-success">Enabled</span>
+                        <span class="ms-2 text-muted">Current: <strong>@selectedTune.Title</strong></span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Off</span>
+                        <span class="ms-2 text-muted">No active caller tune selected.</span>
+                    }
+                </div>
+
+                @if (Model.HasActiveSubscription)
+                {
+                    <small class="text-muted d-block">
+                        Subscription active
+                        @if (Model.SubscriptionExpiresAt != null)
+                        {
+                            <span>until <strong>@Model.SubscriptionExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")</strong></span>
+                        }
+                    </small>
+                }
+                else
+                {
+                    <small class="text-muted d-block">No active subscription. Subscribe to select a tune.</small>
+                }
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <form asp-controller="CallerTune" asp-action="Disable" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-secondary" type="submit" @(Model.CallerTuneEnabled ? "" : "disabled")>Turn off</button>
+                </form>
+
+                @if (!Model.HasActiveSubscription)
+                {
+                    if (Model.SubscriptionProductId != null)
+                    {
+                        <a class="btn btn-brand" asp-controller="Checkout" asp-action="Index" asp-route-productId="@Model.SubscriptionProductId.Value">
+                            Subscribe monthly
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-brand" disabled>Subscribe monthly</button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Tunes.Any())
+    {
+        <div class="empty-state">No caller tunes available yet. Please check back later.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Preview</th>
+                        <th style="width:180px;">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var tune in Model.Tunes)
+                    {
+                        var isSelected = Model.CallerTuneEnabled && Model.SelectedCallerTuneId == tune.Id;
+                        <tr class="@(isSelected ? "table-success" : "")">
+                            <td>
+                                <strong>@tune.Title</strong>
+                                @if (isSelected)
+                                {
+                                    <span class="badge bg-success ms-2">Current</span>
+                                }
+                            </td>
+                            <td>
+                                <audio controls style="width:220px;">
+                                    <source src="@tune.FilePath" type="audio/mpeg" />
+                                </audio>
+                            </td>
+                            <td>
+                                <form asp-controller="CallerTune" asp-action="Select" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@tune.Id" />
+                                    <button class="btn btn-sm btn-success" type="submit" @(Model.HasActiveSubscription ? "" : "disabled")>
+                                        Select
+                                    </button>
+                                </form>
+                                @if (!Model.HasActiveSubscription)
+                                {
+                                    <small class="text-muted d-block mt-1">Requires subscription.</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+

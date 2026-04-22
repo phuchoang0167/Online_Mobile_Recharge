@@ -1,0 +1,12 @@
+# Sequence Diagram Files
+
+- `SEQUENCE_LOGIN.mmd`
+- `SEQUENCE_REGISTER_VERIFY_EMAIL.mmd`
+- `SEQUENCE_FORGOT_RESET_PASSWORD.mmd`
+- `SEQUENCE_PREPAID_PURCHASE.mmd`
+- `SEQUENCE_POSTPAID_CREATE_AND_PAY.mmd`
+- `SEQUENCE_FEEDBACK_AND_ADMIN_REPLY.mmd`
+- `SEQUENCE_USER_CARD_MANAGEMENT.mmd`
+- `SEQUENCE_ADMIN_DASHBOARD_REVIEW.mmd`
+
+Paste each `.mmd` file into Mermaid Live Editor to render and capture screenshots.

@@ -1,0 +1,93 @@
+@model Online_Mobile_Recharge.Models.Entities.Transaction
+
+@{
+    ViewData["Title"] = "Payment Result";
+    var isSuccess = Model.Status == Online_Mobile_Recharge.Models.Enums.TransactionStatus.Success;
+    var isPending = Model.Status == Online_Mobile_Recharge.Models.Enums.TransactionStatus.Pending;
+    var iconClass = isSuccess ? "bi-check-circle-fill text-success" : isPending ? "bi-hourglass-split text-warning" : "bi-x-circle-fill text-danger";
+    var heading = isSuccess ? "Payment Successful" : isPending ? "Transaction Pending" : "Payment Failed";
+    var description = isSuccess
+        ? "Your transaction has been completed successfully."
+        : isPending
+            ? "Your postpaid bill has been created and is waiting for payment in your dashboard."
+            : "Your payment could not be completed. Please check your card details and try again.";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="content-panel text-center">
+                <div class="mb-3">
+                    <i class="bi @iconClass" style="font-size: 60px;"></i>
+                </div>
+
+                <h3 class="fw-bold display-font">@heading</h3>
+                <p class="text-muted mb-4">@description</p>
+
+                <div class="table-card text-start">
+                    <p class="mb-2">
+                        <strong>Phone:</strong>
+                        <span class="float-end">@Model.PhoneNumber</span>
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Amount:</strong>
+                        <span class="float-end text-danger fw-bold">
+                            @Model.Amount.ToString("N0") VND
+                        </span>
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Status:</strong>
+                        <span class="float-end badge @(isSuccess ? "bg-success" : isPending ? "bg-warning text-dark" : "bg-danger")">
+                            @Model.Status
+                        </span>
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Type:</strong>
+                        <span class="float-end badge bg-primary">
+                            @Model.Type
+                        </span>
+                    </p>
+
+                    @if (Model.DueDate != null)
+                    {
+                        <p class="mb-2">
+                            <strong>Due Date:</strong>
+                            <span class="float-end">@Model.DueDate?.ToString("dd/MM/yyyy HH:mm")</span>
+                        </p>
+                    }
+
+                    <p class="mb-0">
+                        <strong>Created:</strong>
+                        <span class="float-end">
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </span>
+                    </p>
+                </div>
+
+                <div class="mt-4 d-grid gap-2">
+                    <a asp-controller="UserTransaction" asp-action="Invoice" asp-route-id="@Model.Id" class="btn btn-outline-dark">
+                        Print / Save Bill as PDF
+                    </a>
+
+                    <a asp-controller="UserTransaction" asp-action="Index" class="btn btn-brand btn-lg">
+                        View Transaction History
+                    </a>
+
+                    @if (isSuccess && Model.ProductId != null)
+                    {
+                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@Model.ProductId" class="btn btn-outline-dark">
+                            Open Product and Leave Feedback
+                        </a>
+                    }
+
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

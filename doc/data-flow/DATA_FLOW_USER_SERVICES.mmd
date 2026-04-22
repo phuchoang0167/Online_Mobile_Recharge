@@ -1,0 +1,43 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    U[User]
+    UD((User Dashboard))
+    PV((Profile / Cards / DND / Caller Tune))
+
+    UC((UserController))
+    UCC((UserCardController))
+    DC((DndController))
+    CTC((CallerTuneController))
+
+    DS((DndService))
+    NS((NotificationService))
+
+    DB[(Users / Cards / DndSettings / DndNumbers / CallerTunes / Transactions)]
+
+    U --> UD
+    UD --> UC
+    UC --> DB
+    DB --> UC
+    UC --> UD
+
+    U --> PV
+    PV --> UCC
+    UCC --> DB
+    DB --> UCC
+    UCC --> PV
+
+    PV --> DC
+    DC --> DS
+    DS --> DB
+    DB --> DS
+    DS --> DC
+    DC --> PV
+
+    PV --> CTC
+    CTC --> DB
+    DB --> CTC
+    CTC --> PV
+
+    UC --> NS
+    NS --> DB

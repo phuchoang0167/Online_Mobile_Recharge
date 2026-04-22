@@ -1,0 +1,252 @@
+@model ProductDetailViewModel
+
+@{
+    ViewData["Title"] = "Product Detail";
+    var pricing = ViewBag.Pricing as Online_Mobile_Recharge.Models.ViewModels.ProductPricingInfoViewModel;
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">@Model.Product.Type package</span>
+            <h1 class="display-font">@Model.Product.Name</h1>
+            <p class="lead-copy">@Model.Product.Description</p>
+        </div>
+
+        <div class="info-card">
+            <strong>Ready to continue?</strong>
+            <p class="mb-2">Review the package details, then move directly into checkout.</p>
+            @if (pricing?.HasSale == true)
+            {
+                <div class="d-flex flex-column">
+                    <span class="badge text-bg-danger align-self-start mb-2">Sale @pricing.SaleBadgeText</span>
+                    <span class="text-muted text-decoration-line-through">@pricing.OriginalPrice.ToString("N0") VND</span>
+                    <strong class="display-font fs-3 text-danger">@pricing.EffectivePrice.ToString("N0") VND</strong>
+                </div>
+            }
+            else
+            {
+                <strong class="display-font fs-3">@Model.Product.Price.ToString("N0") VND</strong>
+            }
+        </div>
+    </div>
+
+    <div class="spotlight-grid">
+        <div class="content-panel">
+            <h4 class="display-font mb-3">Package summary</h4>
+            <p class="text-muted">
+                This product is designed for quick self-service mobile recharge with a simple checkout step and transaction tracking afterward.
+            </p>
+
+            <div class="subtle-divider"></div>
+
+            <h5>Usage notes</h5>
+            <ul class="text-muted mb-0">
+                <li>Activation starts after successful checkout.</li>
+                <li>Double-check the phone number before confirming payment.</li>
+                <li>Feedback only opens after a successful purchase.</li>
+            </ul>
+        </div>
+
+        <div class="product-spotlight">
+            <h4 class="display-font mb-3">Purchase details</h4>
+            <table class="table mb-4">
+                <tr>
+                    <th>Name</th>
+                    <td>@Model.Product.Name</td>
+                </tr>
+                <tr>
+                    <th>Type</th>
+                    <td>@Model.Product.Type</td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td class="text-danger fw-bold">
+                        @if (pricing?.HasSale == true)
+                        {
+                            <div class="d-flex flex-column">
+                                <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
+                                <span>@pricing.EffectivePrice.ToString("N0") VND</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span>@Model.Product.Price.ToString("N0") VND</span>
+                        }
+                    </td>
+                </tr>
+            </table>
+
+            <a asp-controller="Product" asp-action="Buy" asp-route-id="@Model.Product.Id" class="btn btn-brand btn-lg w-100">
+                Buy now
+            </a>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+            <div>
+                <h3 class="display-font mb-2">Product feedback</h3>
+                <p class="text-muted mb-0">Only users with successful purchases can leave feedback for this product.</p>
+            </div>
+            <span class="soft-pill">
+                <i class="bi bi-chat-left-dots"></i>
+                <span>@Model.Feedbacks.Count review(s)</span>
+            </span>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+
+        @if (TempData["FeedbackError"] != null)
+        {
+            <div class="alert alert-danger">@TempData["FeedbackError"]</div>
+        }
+
+        @if (!Model.IsLoggedIn)
+        {
+            <div class="status-note mb-4">
+                Sign in and complete a successful purchase before leaving feedback.
+            </div>
+        }
+        else if (!Model.HasPurchased)
+        {
+            <div class="status-note mb-4">
+                You do not have a successful transaction for this product yet, so feedback is not available.
+            </div>
+        }
+        else
+        {
+            var isFeedbackReadOnly = Model.MyFeedback != null && !Model.CanEditFeedback;
+            <div class="table-card mb-4">
+                <h5 class="mb-3">Your feedback</h5>
+
+                @if (Model.MyFeedback != null)
+                {
+                    <p class="mb-2 text-muted">
+                        Submitted at @Model.MyFeedback.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        @if (Model.MyFeedback.UpdatedAt != null)
+                        {
+                            <span>, updated @Model.MyFeedback.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                        }
+                    </p>
+                }
+
+                @if (Model.CanEditFeedback)
+                {
+                    <p class="small text-muted">
+                        You can edit this feedback until @Model.EditDeadline?.ToString("dd/MM/yyyy HH:mm").
+                    </p>
+                }
+                else if (Model.MyFeedback != null)
+                {
+                    <p class="small text-muted">This feedback is past the 1-day edit window and is now read-only.</p>
+                }
+
+                <form asp-controller="Feedback" asp-action="Upsert" method="post" class="d-grid gap-3" id="productFeedbackForm">
+                    <input asp-for="FeedbackForm.ProductId" type="hidden" />
+                    <div>
+                        <label asp-for="FeedbackForm.Message" class="form-label">Feedback</label>
+                        @if (isFeedbackReadOnly)
+                        {
+                            <textarea asp-for="FeedbackForm.Message"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Share your experience with this product"
+                                      readonly></textarea>
+                        }
+                        else
+                        {
+                            <textarea asp-for="FeedbackForm.Message"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Share your experience with this product"></textarea>
+                        }
+                        <span asp-validation-for="FeedbackForm.Message" class="text-danger"></span>
+                    </div>
+
+                    @if (Model.MyFeedback == null || Model.CanEditFeedback)
+                    {
+                        <button type="submit" class="btn btn-brand">
+                            @(Model.MyFeedback == null ? "Submit feedback" : "Update feedback")
+                        </button>
+                    }
+                </form>
+            </div>
+        }
+
+        @if (!Model.Feedbacks.Any())
+        {
+            <div class="empty-state">
+                No feedback has been posted for this product yet.
+            </div>
+        }
+        else
+        {
+            <div class="d-grid gap-3">
+                @foreach (var item in Model.Feedbacks)
+                {
+                    var isMine = Model.MyFeedback != null && item.Id == Model.MyFeedback.Id;
+                    <div class="table-card">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                            <div>
+                                <strong>@(isMine ? item.Name + " (You)" : item.Name)</strong>
+                                <p class="text-muted mb-2">
+                                    @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    @if (item.UpdatedAt != null)
+                                    {
+                                        <span> | Updated @item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        <p class="mb-0">@item.Message</p>
+                        @if (!string.IsNullOrWhiteSpace(item.AdminReply))
+                        {
+                            <div class="admin-reply-box mt-3">
+                                <strong class="d-block mb-1">Admin reply</strong>
+                                <p class="mb-1">@item.AdminReply</p>
+                                <small class="text-muted">
+                                    Replied @item.AdminRepliedAt?.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("productFeedbackForm");
+
+            if (!form || typeof window.showAppConfirm !== "function") {
+                return;
+            }
+
+            form.addEventListener("submit", function (event) {
+                if (form.dataset.confirmed === "true") {
+                    form.dataset.confirmed = "false";
+                    return;
+                }
+
+                event.preventDefault();
+                window.showAppConfirm({
+                    title: "Submit feedback",
+                    message: "Are you sure you want to submit this feedback?",
+                    onConfirm: function () {
+                        form.dataset.confirmed = "true";
+                        form.requestSubmit();
+                    }
+                });
+            });
+        });
+    </script>
+}

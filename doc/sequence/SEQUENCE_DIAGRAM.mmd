@@ -1,0 +1,29 @@
+sequenceDiagram
+    actor User
+    participant UI as MVC View
+    participant Checkout as CheckoutController
+    participant TxService as TransactionService
+    participant DB as SQL Server
+    participant Notify as NotificationService
+
+    User->>UI: Select product and submit checkout
+    UI->>Checkout: POST checkout form
+    Checkout->>TxService: Validate payment / create transaction
+    TxService->>DB: Read product, user card, existing data
+    DB-->>TxService: Product + card data
+
+    alt Prepaid success
+        TxService->>DB: Save Success transaction
+        DB-->>TxService: Saved
+        TxService-->>Checkout: Success result
+        Checkout->>Notify: Refresh notification context
+        Checkout-->>UI: Redirect to success page
+    else Postpaid flow
+        TxService->>DB: Save Pending postpaid bill
+        DB-->>TxService: Saved
+        TxService-->>Checkout: Pending result
+        Checkout-->>UI: Redirect to success page
+    else Payment fail
+        TxService-->>Checkout: Failure result
+        Checkout-->>UI: Return checkout with error
+    end

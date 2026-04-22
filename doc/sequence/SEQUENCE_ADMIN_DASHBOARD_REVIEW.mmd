@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor Admin
+    participant Dashboard as Admin Dashboard View
+    participant AdminController as AdminController
+    participant AdminTx as AdminTransactionController
+    participant DB as Database
+
+    Admin->>Dashboard: Open dashboard
+    Dashboard->>AdminController: GET /Admin/Dashboard
+    AdminController->>DB: Aggregate users, revenue, pending, overdue, feedback
+    DB-->>AdminController: Summary data
+    AdminController->>DB: Load recent transactions + latest feedback
+    DB-->>AdminController: List data
+    AdminController-->>Dashboard: Render dashboard
+
+    Admin->>Dashboard: Open transaction list
+    Dashboard->>AdminTx: GET /AdminTransaction
+    AdminTx->>DB: Load all transactions with filters
+    DB-->>AdminTx: Transaction list
+    AdminTx-->>Dashboard: Render transaction screen

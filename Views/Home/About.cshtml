@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "About";
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">About the platform</span>
+            <h1 class="display-font">A telecom service app that tries to keep common tasks simple.</h1>
+            <p class="lead-copy">
+                This project combines recharge, bill payment, DND, caller tune, and user transaction tracking into one
+                ASP.NET MVC flow so users can finish everyday telecom actions with less friction.
+            </p>
+        </div>
+
+        <div class="info-card">
+            <strong>What matters most</strong>
+            <p class="mb-0">Clarity, speed, and fewer broken steps when users move from browsing to payment and account management.</p>
+        </div>
+    </div>
+
+    <div class="feature-grid">
+        <article class="feature-card">
+            <div class="feature-icon"><i class="bi bi-bullseye"></i></div>
+            <h5>Mission</h5>
+            <p class="mb-0">Deliver a friendly and reliable experience for mobile recharge and telecom support tasks.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon"><i class="bi bi-compass"></i></div>
+            <h5>Vision</h5>
+            <p class="mb-0">Become a practical digital hub for prepaid, postpaid, and service-management use cases.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+            <h5>Security mindset</h5>
+            <p class="mb-0">Protect account access and keep payment-related flows predictable and easier to trust.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <h5>Operational focus</h5>
+            <p class="mb-0">Give admins and users enough visibility to review transactions, feedback, and service states quickly.</p>
+        </article>
+    </div>
+
+    <div class="content-panel">
+        <div class="section-header-row mb-3">
+            <div>
+                <span class="eyebrow">Need more detail?</span>
+                <h2 class="section-heading display-font">The support section is now part of the main experience.</h2>
+            </div>
+        </div>
+
+        <div class="cta-row">
+            <a asp-controller="Home" asp-action="Faq" class="btn btn-brand">Open FAQ</a>
+            <a asp-controller="Home" asp-action="Contact" class="btn btn-outline-dark rounded-pill px-4">Contact support</a>
+        </div>
+    </div>
+</section>

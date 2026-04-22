@@ -1,0 +1,71 @@
+@model ContactViewModel
+
+@{
+    ViewData["Title"] = "Contact";
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">Contact</span>
+            <h1 class="display-font">Reach the team when a user flow needs help.</h1>
+            <p class="lead-copy">
+                Share issues, questions, or feedback about recharge, payments, login, DND, or caller tune management.
+            </p>
+        </div>
+
+        <div class="info-card">
+            <strong>Support information</strong>
+            <p class="mb-1">Email: support@recharge.com</p>
+            <p class="mb-1">Phone: +84 123 456 789</p>
+            <p class="mb-0">Address: Ho Chi Minh City, Vietnam</p>
+        </div>
+    </div>
+
+    <div class="contact-grid">
+        <div class="contact-card">
+            <h3 class="display-font mb-3">What to include</h3>
+            <p>Tell us which phone number or service type you were working with, what you expected, and what actually happened.</p>
+            <div class="status-note">
+                Faster reports usually include the page name and the step where the issue appeared.
+            </div>
+        </div>
+
+        <div class="content-panel form-card">
+            <h3 class="display-font mb-3">Send a message</h3>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+
+            <form asp-action="Contact" method="post" class="d-grid gap-3">
+                @Html.AntiForgeryToken()
+
+                <div>
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="Your name" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" placeholder="Email address" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Message" class="form-label"></label>
+                    <textarea asp-for="Message" class="form-control" rows="5" placeholder="Describe the issue or question"></textarea>
+                    <span asp-validation-for="Message" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-brand btn-lg">Send message</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

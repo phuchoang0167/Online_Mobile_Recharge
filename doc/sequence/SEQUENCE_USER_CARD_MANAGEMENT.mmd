@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor User
+    participant CardView as User Card View
+    participant CardController as UserCardController
+    participant DB as Database
+
+    User->>CardView: Open wallet
+    CardView->>CardController: GET /User/Cards
+    CardController->>DB: Load cards by UserId
+    DB-->>CardController: Card list
+    CardController-->>CardView: Show cards
+
+    User->>CardView: Add or edit card
+    CardView->>CardController: POST /User/Cards/Save
+    CardController->>DB: Validate and save card
+    DB-->>CardController: Saved
+    CardController-->>CardView: Redirect with success message
+
+    User->>CardView: Delete card
+    CardView->>CardController: POST /User/Cards/Delete/{id}
+    CardController->>DB: Remove selected card
+    DB-->>CardController: Deleted
+    CardController-->>CardView: Redirect with success message

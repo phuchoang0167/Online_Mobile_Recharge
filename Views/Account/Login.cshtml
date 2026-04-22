@@ -1,0 +1,96 @@
+@model LoginViewModel
+
+@{
+    ViewData["Title"] = "Sign In";
+    var returnUrl = ViewBag.ReturnUrl as string;
+    var pendingVerificationEmail = ViewBag.PendingVerificationEmail as string;
+    var debugLink = TempData["DebugLink"] as string;
+    var debugLinkLabel = TempData["DebugLinkLabel"] as string ?? "verification";
+}
+
+<section class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-copy">
+            <span class="eyebrow">Account</span>
+            <h1 class="display-font">Sign in to continue with payments, postpaid bills, and your dashboard.</h1>
+            <p class="lead-copy">Top up services, review transactions, enter card details at checkout, and leave product feedback from one place.</p>
+
+            <div class="table-card">
+                <strong>What can you do after signing in?</strong>
+                <ul class="small text-muted mb-0 ps-3 mt-2">
+                    <li>Track postpaid bills and upcoming due dates.</li>
+                    <li>Manage DND settings, caller tunes, and payment activity.</li>
+                    <li>Review products after successful purchases.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="auth-panel">
+            <div class="mb-4">
+                <h3 class="display-font mb-2">Sign In</h3>
+                <p class="text-muted mb-0">Enter your email and password to access your account.</p>
+            </div>
+
+            <div class="alert alert-light border small">
+                If you verified your email or reset your password in another tab, refresh this page and sign in again.
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+
+            @if (TempData["AuthError"] != null)
+            {
+                <div class="alert alert-danger">@TempData["AuthError"]</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(debugLink))
+            {
+                <div class="alert alert-warning small demo-link-alert">
+                    <div class="fw-semibold mb-2">Email delivery is currently unavailable.</div>
+                    <div class="mb-2">Use this @debugLinkLabel link.</div>
+                    <a href="@debugLink" class="btn btn-sm btn-outline-dark demo-link-button">Open link</a>
+                    <div class="demo-link-text mt-2">@debugLink</div>
+                </div>
+            }
+
+            <form asp-action="Login" method="post" class="d-grid gap-3">
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div>
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control form-control-lg" placeholder="Email" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" type="password" class="form-control form-control-lg" placeholder="Password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <button class="btn btn-brand btn-lg" type="submit">Sign In</button>
+            </form>
+
+            @if (!string.IsNullOrWhiteSpace(pendingVerificationEmail))
+            {
+                <form asp-action="ResendVerificationEmail" method="post" class="mt-3">
+                    <input type="hidden" name="email" value="@pendingVerificationEmail" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button class="btn btn-outline-secondary w-100" type="submit">Resend Verification Email</button>
+                </form>
+            }
+
+            <div class="text-center mt-4 small">
+                <a asp-action="Register">Create account</a>
+                <span class="mx-2">|</span>
+                <a asp-action="ResetPassword">Forgot password?</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,53 @@
+@model List<Online_Mobile_Recharge.Models.ViewModels.FaqItemViewModel>
+
+@{
+    ViewData["Title"] = "FAQ";
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner">
+        <div>
+            <span class="eyebrow">Support</span>
+            <h1 class="display-font">Frequently asked questions</h1>
+            <p class="lead-copy">
+                Everything users usually need before they recharge, pay a bill, or manage telecom services.
+            </p>
+        </div>
+        <div class="info-card">
+            <strong>Need help now?</strong>
+            <p class="mb-0">Use the contact form or send feedback and the admin team can review it quickly.</p>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="accordion faq-accordion" id="faqAccordion">
+            @for (var i = 0; i < Model.Count; i++)
+            {
+                var item = Model[i];
+                var headingId = $"faqHeading{i}";
+                var collapseId = $"faqCollapse{i}";
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="@headingId">
+                        <button class="accordion-button @(i == 0 ? string.Empty : "collapsed")"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#@collapseId"
+                                aria-expanded="@(i == 0 ? "true" : "false")"
+                                aria-controls="@collapseId">
+                            @item.Question
+                        </button>
+                    </h2>
+                    <div id="@collapseId"
+                         class="accordion-collapse collapse @(i == 0 ? "show" : string.Empty)"
+                         aria-labelledby="@headingId"
+                         data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            @item.Answer
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

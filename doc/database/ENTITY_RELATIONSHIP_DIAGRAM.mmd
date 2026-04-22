@@ -1,0 +1,97 @@
+erDiagram
+    USERS ||--o{ TRANSACTIONS : "1..many"
+    USERS ||--o{ FEEDBACKS : "1..many"
+    USERS ||--o{ CARDS : "1..many"
+    USERS ||--o| DNDSETTINGS : "1..1"
+    USERS ||--o{ CALLERTUNES : "1..many"
+    DNDSETTINGS ||--o{ DNDNUMBERS : "1..many"
+    PRODUCTS ||--o{ TRANSACTIONS : "1..many"
+    PRODUCTS ||--o{ FEEDBACKS : "1..many"
+    TRANSACTIONS ||--o{ FEEDBACKS : "1..many"
+
+    USERS {
+        int Id PK
+        string Name
+        string Email
+        string Password
+        string Role
+        string PhoneNumber
+        bool EmailVerified
+        string EmailVerificationTokenHash
+        datetime EmailVerificationTokenExpiresAt
+        string PasswordResetTokenHash
+        datetime PasswordResetTokenExpiresAt
+        bool IsActive
+        bool IsDeleted
+        datetime CreatedAt
+    }
+
+    PRODUCTS {
+        int Id PK
+        string Name
+        string Description
+        decimal Price
+        string Type
+        bool IsSpecial
+        bool IsTop
+    }
+
+    TRANSACTIONS {
+        int Id PK
+        int UserId FK
+        int ProductId FK
+        string PhoneNumber
+        decimal Amount
+        string Type
+        string PaymentMethod
+        string Status
+        datetime DueDate
+        bool IsPaid
+        datetime CreatedAt
+    }
+
+    FEEDBACKS {
+        int Id PK
+        string Category
+        string Name
+        string Email
+        string Message
+        string AdminReply
+        datetime AdminRepliedAt
+        int UserId FK
+        int ProductId FK
+        int TransactionId FK
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    CARDS {
+        int Id PK
+        int UserId FK
+        string CardNumber
+        string CVV
+        decimal Balance
+        decimal Price
+        datetime ExpiryDate
+    }
+
+    DNDSETTINGS {
+        int Id PK
+        int UserId FK
+        bool IsEnabled
+        string Mode
+    }
+
+    DNDNUMBERS {
+        int Id PK
+        int DndSettingId FK
+        string PhoneNumber
+    }
+
+    CALLERTUNES {
+        int Id PK
+        int UserId FK
+        string FilePath
+        bool IsActive
+        datetime CreatedAt
+    }

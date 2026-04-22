@@ -1,0 +1,31 @@
+@model Online_Mobile_Recharge.Models.ViewModels.PhoneSelectionViewModel
+
+@{
+    ViewData["Title"] = "Select phone number";
+}
+
+<div class="content-panel">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="ui-icon-bubble soft-info"><i class="bi bi-telephone"></i></span>
+        <h2 class="display-font mb-0">Select phone number</h2>
+    </div>
+    <p class="text-muted mb-4">Choose the phone number first, then pick products and complete payment.</p>
+
+    <form asp-action="Select" method="post" class="d-grid gap-3 mx-auto" style="max-width: 480px;">
+        @Html.AntiForgeryToken()
+        <input asp-for="ReturnUrl" type="hidden" />
+
+        <div>
+            <label asp-for="Phone" class="form-label">Phone number</label>
+            <input asp-for="Phone" class="form-control" inputmode="numeric" placeholder="0xxxxxxxxx" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-brand">Save phone</button>
+        <a class="btn btn-outline-dark" asp-controller="Product" asp-action="Index">Back to products</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,285 @@
+@model HomeViewModel
+
+@{
+    ViewData["Title"] = "Home";
+    var pricingByProductId = ViewBag.FeaturedPricingByProductId as Dictionary<int, Online_Mobile_Recharge.Models.ViewModels.ProductPricingInfoViewModel>
+        ?? new Dictionary<int, Online_Mobile_Recharge.Models.ViewModels.ProductPricingInfoViewModel>();
+}
+
+<section class="page-shell home-shell">
+    <div class="hero-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">Telecom self-service</span>
+            <h1 class="display-font">Recharge faster, pay bills cleaner, manage services in one flow.</h1>
+            <p class="lead-copy">
+                Online Mobile Recharge gives users a simpler path for prepaid top-ups, postpaid payments, DND controls,
+                caller tune management, and transaction tracking without bouncing between tools.
+            </p>
+
+            <div class="hero-actions">
+                <a asp-controller="Product" asp-action="Index" class="btn btn-brand btn-lg">Explore products</a>
+                <a asp-controller="Home" asp-action="Faq" class="btn btn-outline-dark btn-lg rounded-pill px-4">Read FAQ</a>
+            </div>
+        </div>
+
+        <div class="d-grid gap-3">
+            <div class="info-card">
+                <span class="soft-pill mb-3">Live project snapshot</span>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <strong>@Model.TotalUsers+</strong>
+                        <span>registered users</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong>@Model.TotalTransactions+</strong>
+                        <span>transactions handled</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong>@Model.SuccessRate%</strong>
+                        <span>successful flow rate</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-preview-card">
+                <h5>What users usually do first</h5>
+                <p class="mb-0">Browse packages, confirm the phone number, pay, then review history or manage telecom add-ons.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <div class="section-header-row">
+            <div>
+                <span class="eyebrow">Core features</span>
+                <h2 class="section-heading display-font">Built for the whole mobile service flow</h2>
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-lightning-charge"></i></div>
+                <h5>Prepaid recharge</h5>
+                <p class="mb-0">Top up quickly with a cleaner checkout flow and faster transaction confirmation.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-wallet2"></i></div>
+                <h5>Postpaid bills</h5>
+                <p class="mb-0">Handle monthly bill payments in the same place without switching systems.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-shield-lock"></i></div>
+                <h5>DND management</h5>
+                <p class="mb-0">Allow all, block all, or create a custom list of numbers based on your needs.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-music-note-list"></i></div>
+                <h5>Caller tune control</h5>
+                <p class="mb-0">Upload, activate, and rotate caller tunes without leaving the dashboard.</p>
+            </article>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="section-header-row mb-3">
+            <div>
+                <span class="eyebrow">How it works</span>
+                <h2 class="section-heading display-font">A simple journey from selection to support</h2>
+            </div>
+            <a asp-controller="Home" asp-action="HowItWorks" class="btn btn-outline-dark rounded-pill px-4">See full guide</a>
+        </div>
+
+        <div class="feature-grid">
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-bag-check"></i></div>
+                <h5>Choose a service</h5>
+                <p class="mb-0">Browse prepaid, postpaid, and telecom service options in one place.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-check2-square"></i></div>
+                <h5>Confirm the details</h5>
+                <p class="mb-0">Review the target phone number, payment method, and order type before continuing.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-credit-card-2-front"></i></div>
+                <h5>Complete payment</h5>
+                <p class="mb-0">Pay immediately for prepaid orders or create and settle postpaid bills from history later.</p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon"><i class="bi bi-chat-square-text"></i></div>
+                <h5>Review and get support</h5>
+                <p class="mb-0">Track transactions, leave feedback, and check admin replies from your account area.</p>
+            </article>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <div class="section-header-row">
+            <div>
+                <span class="eyebrow">Best sellers</span>
+                <h2 class="section-heading display-font">Most purchased packs and recharge options</h2>
+            </div>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-pill px-4">View all</a>
+        </div>
+
+        <div class="spotlight-grid">
+            @foreach (var product in Model.FeaturedProducts)
+            {
+                <article class="product-spotlight">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            <span class="soft-pill mb-2">@product.Type</span>
+                            <h5>@product.Name</h5>
+                            <p class="product-meta mb-0">@product.Description</p>
+                        </div>
+                        <div class="spotlight-icon d-flex flex-column align-items-end gap-1">
+                            @{ pricingByProductId.TryGetValue(product.Id, out var pricing); }
+                            <i class="bi bi-stars"></i>
+                            @if (pricing?.HasSale == true)
+                            {
+                                <span class="badge text-bg-danger">Sale @pricing.SaleBadgeText</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        @if (pricing?.HasSale == true)
+                        {
+                            <div class="d-flex flex-column">
+                                <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
+                                <strong class="display-font fs-4 text-danger">@pricing.EffectivePrice.ToString("N0") VND</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <strong class="display-font fs-4">@product.Price.ToString("N0") VND</strong>
+                        }
+                        <a asp-controller="Product" asp-action="Detail" asp-route-id="@product.Id" class="btn btn-brand">View</a>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+
+    <div class="section-block">
+        <div class="section-header-row">
+            <div>
+                <span class="eyebrow">Why choose us</span>
+                <h2 class="section-heading display-font">Focused on clarity, speed, and trust</h2>
+            </div>
+        </div>
+
+        <div class="spotlight-grid">
+            <article class="product-spotlight">
+                <div class="soft-pill mb-3">Fast checkout</div>
+                <h5>Less friction during payment</h5>
+                <p class="mb-0">The payment flow is streamlined so users can move from product choice to transaction confirmation with fewer confusing steps.</p>
+            </article>
+
+            <article class="product-spotlight">
+                <div class="soft-pill mb-3">Clear status</div>
+                <h5>Transparent transaction tracking</h5>
+                <p class="mb-0">Users can distinguish successful orders, pending bills, failed payments, and overdue transactions more easily.</p>
+            </article>
+
+            <article class="product-spotlight">
+                <div class="soft-pill mb-3">Account self-service</div>
+                <h5>Useful dashboard actions</h5>
+                <p class="mb-0">Profile updates, telecom add-ons, transaction history, and manual payment flows are grouped inside one user dashboard.</p>
+            </article>
+
+            <article class="product-spotlight">
+                <div class="soft-pill mb-3">Support ready</div>
+                <h5>Feedback and admin response</h5>
+                <p class="mb-0">Product feedback and support contact options stay close to the main purchase flow so help feels easier to access.</p>
+            </article>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="section-header-row mb-3">
+            <div>
+                <span class="eyebrow">Policies and trust</span>
+                <h2 class="section-heading display-font">You can check it out before contact or use</h2>
+            </div>
+        </div>
+
+        <div class="policy-grid">
+            <article class="policy-card">
+                <h5>About the platform</h5>
+                <p class="mb-0">Understand what the system offers and the type of telecom tasks it is built to support.</p>
+                <a asp-controller="Home" asp-action="About" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open About</a>
+            </article>
+
+            <article class="policy-card">
+                <h5>How it works</h5>
+                <p class="mb-0">See the full user journey from browsing services to reviewing the transaction after payment.</p>
+                <a asp-controller="Home" asp-action="HowItWorks" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open guide</a>
+            </article>
+
+            <article class="policy-card">
+                <h5>Terms of service</h5>
+                <p class="mb-0">Read the general rules for account usage, payments, support handling, and acceptable behavior.</p>
+                <a asp-controller="Home" asp-action="Terms" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open terms</a>
+            </article>
+
+            <article class="policy-card">
+                <h5>Privacy policy</h5>
+                <p class="mb-0">Review what kinds of account, transaction, and support data are stored and why they are needed.</p>
+                <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open privacy</a>
+            </article>
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="section-header-row mb-3">
+            <div>
+                <span class="eyebrow">FAQ preview</span>
+                <h2 class="section-heading display-font">A few quick answers before you start</h2>
+            </div>
+            <a asp-controller="Home" asp-action="Faq" class="btn btn-outline-dark rounded-pill px-4">Full FAQ</a>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var faq in Model.FaqItems)
+            {
+                <div class="col-md-6">
+                    <article class="faq-preview-card h-100">
+                        <h5>@faq.Question</h5>
+                        <p class="mb-0">@faq.Answer</p>
+                    </article>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="content-panel">
+        <div class="section-header-row mb-3">
+            <div>
+                <span class="eyebrow">Support access</span>
+                <h2 class="section-heading display-font">Small but useful details that make the platform feel complete</h2>
+            </div>
+        </div>
+
+        <div class="support-list">
+            <div class="support-item">
+                <h5>Email support</h5>
+                <p class="mb-0">Users can send support requests and account-related questions through the contact page.</p>
+            </div>
+            <div class="support-item">
+                <h5>Product feedback</h5>
+                <p class="mb-0">Customers who complete a purchase can return to the product page and leave feedback about the service.</p>
+            </div>
+            <div class="support-item">
+                <h5>Dashboard visibility</h5>
+                <p class="mb-0">The dashboard centralizes profile updates, transaction review, and service-management actions.</p>
+            </div>
+        </div>
+    </div>
+</section>

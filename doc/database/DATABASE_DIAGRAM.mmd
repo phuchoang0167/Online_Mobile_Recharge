@@ -1,0 +1,12 @@
+erDiagram
+    USERS ||--o{ TRANSACTIONS : has
+    USERS ||--o{ FEEDBACKS : writes
+    USERS ||--o{ CARDS : owns
+    USERS ||--o| DNDSETTINGS : configures
+    DNDSETTINGS ||--o{ DNDNUMBERS : contains
+    USERS ||--o{ CALLERTUNES : uploads
+    PRODUCTS ||--o{ TRANSACTIONS : sold_in
+    PRODUCTS ||--o{ FEEDBACKS : reviewed_in
+    PRODUCTS ||--o{ PRODUCTSALES : has
+    TRANSACTIONS ||--o{ FEEDBACKS : references
+    PRODUCTS ||--o{ PHONEDATASUBSCRIPTIONS : activates

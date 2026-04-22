@@ -1,0 +1,65 @@
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<section class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-copy">
+            <span class="eyebrow">Register</span>
+            <h1 class="display-font">Create a new account and activate it through email verification.</h1>
+            <p class="lead-copy">After registration, we send a verification email. You can sign in only after your email has been verified.</p>
+        </div>
+
+        <div class="auth-panel">
+            <div class="mb-4">
+                <h3 class="display-font mb-2">Create Account</h3>
+                <p class="text-muted mb-0">Fill in your basic details to get started.</p>
+            </div>
+
+            <form asp-action="Register" method="post" class="d-grid gap-3">
+                <div>
+                    <label asp-for="Name" class="form-label">Full Name</label>
+                    <input asp-for="Name" class="form-control form-control-lg" placeholder="Full name" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control form-control-lg" placeholder="Email" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                    <input asp-for="PhoneNumber" class="form-control form-control-lg" placeholder="Phone number" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" type="password" class="form-control form-control-lg" placeholder="Password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control form-control-lg" placeholder="Confirm password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button class="btn btn-brand btn-lg" type="submit">Register</button>
+            </form>
+
+            <div class="text-center mt-4 small">
+                Already have an account?
+                <a asp-action="Login">Sign in</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

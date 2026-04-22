@@ -1,0 +1,68 @@
+@model Online_Mobile_Recharge.Models.ViewModels.UserProfileViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "My Profile";
+    var nationalIdDisplay = string.IsNullOrWhiteSpace(Model.NationalId) ? "-" : Model.NationalId;
+    var billingAddressDisplay = string.IsNullOrWhiteSpace(Model.BillingAddress) ? "-" : Model.BillingAddress;
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="display-font mb-2">My Profile</h2>
+            <p class="text-muted mb-0">View the account information currently attached to your user dashboard.</p>
+        </div>
+        <a asp-controller="User" asp-action="Settings" class="btn btn-brand">Edit info &amp; password</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="table-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
+                    <strong>Email status</strong>
+                    @if (Model.EmailVerified)
+                    {
+                        <span class="badge bg-success">Verified</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Unverified</span>
+                    }
+                </div>
+                <p class="text-muted mb-0">Your sign-in email is the primary account identifier, so it stays locked here.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="table-card h-100">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Full name</label>
+                        <input value="@Model.Name" class="form-control locked-field" disabled />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Phone number</label>
+                        <input value="@Model.PhoneNumber" class="form-control locked-field" disabled />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Email</label>
+                        <input value="@Model.Email" class="form-control locked-field" disabled />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">National ID / CCCD</label>
+                        <input value="@nationalIdDisplay" class="form-control locked-field" disabled />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label text-muted">Billing address</label>
+                        <input value="@billingAddressDisplay" class="form-control locked-field" disabled />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Created at</label>
+                        <input value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" class="form-control locked-field" disabled />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

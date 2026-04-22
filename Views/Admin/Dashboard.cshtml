@@ -1,0 +1,455 @@
+@using Online_Mobile_Recharge.Models.Entities
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Admin Dashboard";
+    var recentTransactions = ViewBag.RecentTransactions as List<Transaction> ?? new();
+    var recentFeedbacks = ViewBag.RecentFeedbacks as List<Feedback> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+    <div>
+        <h2 class="display-font mb-2">Admin Dashboard</h2>
+        <p class="text-muted mb-0">A quick overview of users, transactions, feedback, and items that need attention.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="dashboard-card h-100 text-center">
+            <h5>Total users</h5>
+            <h3 class="display-font text-primary">@ViewBag.TotalUsers</h3>
+            <p class="text-muted mb-0">Total user accounts (excluding deleted).</p>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="dashboard-card h-100 text-center">
+            <h5>Unpaid postpaid bills</h5>
+            <h3 class="display-font text-danger">@ViewBag.UnpaidPostpaidBills</h3>
+            <p class="text-muted mb-0">Postpaid transactions still pending and not settled.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="content-panel h-100 chart-card">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <div>
+                    <h4 class="display-font mb-1">User & transaction trends</h4>
+                    <p class="text-muted mb-0">New user registrations and total transactions grouped by week, month, or year.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="soft-pill">Group by</span>
+                    <select id="trendPeriod" class="form-select form-select-sm" style="width: 140px;">
+                        <option value="week" selected>Week</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                    </select>
+                    <span class="soft-pill">From</span>
+                    <input id="trendFrom" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <span class="soft-pill">To</span>
+                    <input id="trendTo" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <button id="trendApply" type="button" class="btn btn-outline-secondary btn-sm">Apply</button>
+                </div>
+            </div>
+            <canvas id="trendChart" class="chart-canvas" aria-label="Trend chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="content-panel h-100 chart-card">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <div>
+                    <h4 class="display-font mb-1">Revenue trends</h4>
+                    <p class="text-muted mb-0">Total paid revenue grouped by week, month, or year.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span id="revenueTotal" class="soft-pill">Total: -</span>
+                    <span class="soft-pill">Group by</span>
+                    <select id="revenuePeriod" class="form-select form-select-sm" style="width: 140px;">
+                        <option value="week" selected>Week</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                    </select>
+                    <span class="soft-pill">From</span>
+                    <input id="revenueFrom" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <span class="soft-pill">To</span>
+                    <input id="revenueTo" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <button id="revenueApply" type="button" class="btn btn-outline-secondary btn-sm">Apply</button>
+                </div>
+            </div>
+            <canvas id="revenueChart" class="chart-canvas" aria-label="Revenue chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="content-panel h-100">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <h4 class="display-font mb-0">Recent transactions</h4>
+                <a asp-controller="AdminTransaction" asp-action="Index" class="btn btn-outline-secondary btn-sm">View all</a>
+            </div>
+
+            @if (!recentTransactions.Any())
+            {
+                <div class="empty-state-panel">
+                    <i class="bi bi-bar-chart-line"></i>
+                    <strong>No transaction activity yet</strong>
+                    <span>Recent transaction data will appear here once users start checking out and paying bills.</span>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Product</th>
+                                <th>Phone</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in recentTransactions)
+                            {
+                                <tr>
+                                    <td>@(item.User?.Name ?? "-")</td>
+                                    <td>@(item.Product?.Name ?? "-")</td>
+                                    <td>@item.PhoneNumber</td>
+                                    <td>@item.Amount.ToString("N0") VND</td>
+                                    <td>@item.Status</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="content-panel h-100">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <h4 class="display-font mb-0">Latest feedback</h4>
+                <a asp-action="Feedbacks" class="btn btn-outline-secondary btn-sm">Open list</a>
+            </div>
+
+            @if (!recentFeedbacks.Any())
+            {
+                <div class="empty-state-panel">
+                    <i class="bi bi-chat-left-dots"></i>
+                    <strong>No feedback yet</strong>
+                    <span>Product reviews and support requests will appear here for the admin team to review.</span>
+                </div>
+            }
+            else
+            {
+                <div class="d-grid gap-3">
+                    @foreach (var item in recentFeedbacks)
+                    {
+                        <div class="table-card">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <strong>@(item.User?.Name ?? item.Name)</strong>
+                                    <p class="text-muted small mb-2">
+                                        @(item.Product?.Name ?? "General support") | @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </p>
+                                </div>
+                                <span class="soft-pill">@item.Category</span>
+                            </div>
+                            <p class="mb-0">@item.Message</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Chart === "undefined") {
+                return;
+            }
+
+            const trendCanvas = document.getElementById("trendChart");
+            const trendPeriod = document.getElementById("trendPeriod");
+            const trendFrom = document.getElementById("trendFrom");
+            const trendTo = document.getElementById("trendTo");
+            const trendApply = document.getElementById("trendApply");
+            let trendChart = null;
+
+            const revenueCanvas = document.getElementById("revenueChart");
+            const revenuePeriod = document.getElementById("revenuePeriod");
+            const revenueFrom = document.getElementById("revenueFrom");
+            const revenueTo = document.getElementById("revenueTo");
+            const revenueApply = document.getElementById("revenueApply");
+            const revenueTotal = document.getElementById("revenueTotal");
+            let revenueChart = null;
+
+            const moneyFormatter = new Intl.NumberFormat("vi-VN");
+
+            function toDateInputValue(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            }
+
+            function addDays(date, days) {
+                const next = new Date(date.getTime());
+                next.setDate(next.getDate() + days);
+                return next;
+            }
+
+            function setDefaultRangeForPeriod(period, fromInput, toInput) {
+                const today = new Date();
+                if (!fromInput || !toInput) {
+                    return;
+                }
+
+                toInput.value = toDateInputValue(today);
+
+                if (period === "year") {
+                    fromInput.value = toDateInputValue(new Date(today.getFullYear() - 4, 0, 1));
+                    return;
+                }
+
+                if (period === "month") {
+                    const start = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+                    fromInput.value = toDateInputValue(start);
+                    return;
+                }
+
+                fromInput.value = toDateInputValue(addDays(today, -83));
+            }
+
+            async function loadTrendData(period) {
+                const params = new URLSearchParams({ period: period });
+
+                if (trendFrom?.value) {
+                    params.set("from", trendFrom.value);
+                }
+
+                if (trendTo?.value) {
+                    params.set("to", trendTo.value);
+                }
+
+                const response = await fetch(`/Admin/TrendData?${params.toString()}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`TrendData request failed: ${response.status}`);
+                }
+
+                return await response.json();
+            }
+
+            async function loadRevenueData(period) {
+                const params = new URLSearchParams({ period: period });
+
+                if (revenueFrom?.value) {
+                    params.set("from", revenueFrom.value);
+                }
+
+                if (revenueTo?.value) {
+                    params.set("to", revenueTo.value);
+                }
+
+                const response = await fetch(`/Admin/RevenueData?${params.toString()}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`RevenueData request failed: ${response.status}`);
+                }
+
+                return await response.json();
+            }
+
+            function renderTrendChart(trend) {
+                if (!trendCanvas) {
+                    return;
+                }
+
+                if (trend && trend.error) {
+                    console.warn(trend.error);
+                    return;
+                }
+
+                if (trendChart) {
+                    trendChart.destroy();
+                }
+
+                trendChart = new Chart(trendCanvas, {
+                    type: "line",
+                    data: {
+                        labels: trend.labels ?? [],
+                        datasets: [
+                            {
+                                label: "New users",
+                                data: trend.users ?? [],
+                                borderColor: "#2563eb",
+                                backgroundColor: "rgba(37, 99, 235, 0.12)",
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius: 3
+                            },
+                            {
+                                label: "Transactions",
+                                data: trend.transactions ?? [],
+                                borderColor: "#0f766e",
+                                backgroundColor: "rgba(15, 118, 110, 0.12)",
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 },
+                                grid: { color: "rgba(15, 23, 42, 0.08)" }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: "bottom" }
+                        }
+                    }
+                });
+            }
+
+            function renderRevenueChart(revenueData) {
+                if (!revenueCanvas) {
+                    return;
+                }
+
+                if (revenueData && revenueData.error) {
+                    console.warn(revenueData.error);
+                    return;
+                }
+
+                if (revenueChart) {
+                    revenueChart.destroy();
+                }
+
+                if (revenueTotal) {
+                    const total = revenueData?.totalRevenue ?? null;
+                    revenueTotal.textContent = total === null ? "Total: -" : `Total: ${moneyFormatter.format(total)} VND`;
+                }
+
+                revenueChart = new Chart(revenueCanvas, {
+                    type: "bar",
+                    data: {
+                        labels: revenueData.labels ?? [],
+                        datasets: [
+                            {
+                                label: "Revenue (VND)",
+                                data: revenueData.revenue ?? [],
+                                backgroundColor: "rgba(245, 158, 11, 0.25)",
+                                borderColor: "#f59e0b",
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return `${moneyFormatter.format(value)} VND`;
+                                    }
+                                },
+                                grid: { color: "rgba(15, 23, 42, 0.08)" }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: "bottom" }
+                        }
+                    }
+                });
+            }
+
+            async function refreshTrend(period) {
+                if (!trendCanvas) {
+                    return;
+                }
+
+                try {
+                    const trend = await loadTrendData(period);
+                    renderTrendChart(trend);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            async function refreshRevenue(period) {
+                if (!revenueCanvas) {
+                    return;
+                }
+
+                try {
+                    const revenueData = await loadRevenueData(period);
+                    renderRevenueChart(revenueData);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            if (trendPeriod) {
+                trendPeriod.addEventListener("change", function () {
+                    setDefaultRangeForPeriod(trendPeriod.value, trendFrom, trendTo);
+                    refreshTrend(trendPeriod.value);
+                });
+            }
+
+            if (trendApply) {
+                trendApply.addEventListener("click", function () {
+                    refreshTrend(trendPeriod?.value ?? "week");
+                });
+            }
+
+            if (revenuePeriod) {
+                revenuePeriod.addEventListener("change", function () {
+                    setDefaultRangeForPeriod(revenuePeriod.value, revenueFrom, revenueTo);
+                    refreshRevenue(revenuePeriod.value);
+                });
+            }
+
+            if (revenueApply) {
+                revenueApply.addEventListener("click", function () {
+                    refreshRevenue(revenuePeriod?.value ?? "week");
+                });
+            }
+
+            setDefaultRangeForPeriod(trendPeriod?.value ?? "week", trendFrom, trendTo);
+            refreshTrend(trendPeriod?.value ?? "week");
+
+            setDefaultRangeForPeriod(revenuePeriod?.value ?? "week", revenueFrom, revenueTo);
+            refreshRevenue(revenuePeriod?.value ?? "week");
+        });
+    </script>
+}

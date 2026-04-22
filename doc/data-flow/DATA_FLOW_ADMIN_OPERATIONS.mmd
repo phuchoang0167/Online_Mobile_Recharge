@@ -1,0 +1,32 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    A[Admin]
+    AD((Admin Dashboard))
+    AU((Users / Transactions / Feedbacks))
+
+    AC((AdminController))
+    ATC((AdminTransactionController))
+    NS((NotificationService))
+
+    DB[(Users / Transactions / Feedbacks / Products)]
+
+    A --> AD
+    AD --> AC
+    AC --> DB
+    DB --> AC
+    AC --> AD
+
+    A --> AU
+    AU --> AC
+    AC --> DB
+    DB --> AC
+    AC --> AU
+
+    AU --> ATC
+    ATC --> DB
+    DB --> ATC
+    ATC --> AU
+
+    AC --> NS
+    NS --> DB

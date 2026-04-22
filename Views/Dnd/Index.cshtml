@@ -1,0 +1,116 @@
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "DND Settings";
+}
+
+@using Online_Mobile_Recharge.Models.Enums
+@model Online_Mobile_Recharge.Models.Entities.DndSetting
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h3 class="mb-2 display-font">DND Settings</h3>
+            <p class="text-muted mb-0">Enable or disable Do Not Disturb and manage your custom blocked number list.</p>
+        </div>
+        <span class="soft-pill">Mode: @Model.Mode</span>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form asp-controller="Dnd" asp-action="Save" method="post" class="table-card mb-4">
+        <div class="form-check form-switch mb-3">
+            <input type="hidden" name="isEnabled" value="false" />
+            <input type="checkbox" name="isEnabled" value="true" class="form-check-input" id="dndEnabled" @(Model.IsEnabled ? "checked" : "") />
+            <label class="form-check-label" for="dndEnabled">Enable DND</label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="modeSelect">Mode</label>
+            <select name="mode" id="modeSelect" class="form-select">
+                <option value="AllowAll" selected="@(Model.Mode == DndMode.AllowAll ? "selected" : null)">Allow All</option>
+                <option value="BlockAll" selected="@(Model.Mode == DndMode.BlockAll ? "selected" : null)">Block All</option>
+                <option value="Custom" selected="@(Model.Mode == DndMode.Custom ? "selected" : null)">Custom</option>
+            </select>
+        </div>
+
+        <div id="numbersBox" class="mb-3">
+            <label class="form-label" for="numbers">Custom Numbers</label>
+            <textarea name="numbers"
+                      id="numbers"
+                      rows="3"
+                      class="form-control"
+                      placeholder="Enter numbers separated by commas, for example: 0901234567, 0912345678">@string.Join(", ", Model.Numbers.Select(x => x.PhoneNumber))</textarea>
+            <small class="text-muted">Only 10-digit phone numbers starting with 0 are accepted.</small>
+        </div>
+
+        <button class="btn btn-brand">Save Settings</button>
+    </form>
+
+    <div id="customSection" class="content-panel">
+        <h4 class="display-font mb-3">Blocked Number List</h4>
+
+        <form asp-controller="Dnd" asp-action="Add" method="post" class="d-flex gap-2 mb-3 flex-wrap">
+            <input type="text" name="phone" class="form-control" placeholder="Enter a 10-digit phone number" required />
+            <button class="btn btn-brand">Add Number</button>
+        </form>
+
+        @if (!Model.Numbers.Any())
+        {
+            <div class="empty-state">No numbers have been added to DND yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 app-table">
+                    <thead>
+                        <tr>
+                            <th>Phone</th>
+                            <th style="width:120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var number in Model.Numbers)
+                        {
+                            <tr>
+                                <td>@number.PhoneNumber</td>
+                                <td>
+                                    <form asp-controller="Dnd" asp-action="Delete" method="post" data-confirm-title="Delete number" data-confirm-message="Are you sure you want to delete this number?">
+                                        <input type="hidden" name="id" value="@number.Id" />
+                                        <button class="btn btn-outline-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modeSelect = document.getElementById("modeSelect");
+            const customSection = document.getElementById("customSection");
+            const numbersBox = document.getElementById("numbersBox");
+
+            function toggleBox() {
+                const isCustom = modeSelect.value === "Custom";
+                customSection.style.display = isCustom ? "block" : "none";
+                numbersBox.style.display = isCustom ? "block" : "none";
+            }
+
+            modeSelect.addEventListener("change", toggleBox);
+            toggleBox();
+        });
+    </script>
+}

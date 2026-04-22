@@ -1,0 +1,116 @@
+@model Online_Mobile_Recharge.Models.ViewModels.UserSettingsViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Account Settings";
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+        <div>
+            <h2 class="display-font mb-2">Account Settings</h2>
+            <p class="text-muted mb-0">Update personal details in one place and change your password with current-password confirmation.</p>
+        </div>
+        <a asp-controller="User" asp-action="Profile" class="btn btn-outline-secondary">Back to profile</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div asp-validation-summary="All" class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : null)"></div>
+
+    <div class="row g-4">
+        <div class="col-xl-7">
+            <div class="table-card h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                    <div>
+                        <h4 class="display-font mb-1">User information</h4>
+                        <p class="text-muted mb-0">Email is locked because it is used as the login account for this user.</p>
+                    </div>
+                    @if (Model.EmailVerified)
+                    {
+                        <span class="badge bg-success">Verified email</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Unverified email</span>
+                    }
+                </div>
+
+                <form asp-controller="User" asp-action="UpdateSettings" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Full name</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control locked-field" disabled />
+                        <div class="form-text">This field is locked and cannot be changed from the dashboard.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">Phone number</label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NationalId" class="form-label">National ID / CCCD</label>
+                        <input asp-for="NationalId" class="form-control" inputmode="numeric" />
+                        <span asp-validation-for="NationalId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="BillingAddress" class="form-label">Billing address</label>
+                        <input asp-for="BillingAddress" class="form-control" />
+                        <span asp-validation-for="BillingAddress" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="CreatedAt" class="form-label">Created at</label>
+                        <input value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" class="form-control locked-field" disabled />
+                    </div>
+
+                    <button type="submit" class="btn btn-brand">Save user info</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-xl-5">
+            <div class="table-card h-100">
+                <h4 class="display-font mb-1">Change password</h4>
+                <p class="text-muted mb-3">Enter your current password before setting and confirming a new one.</p>
+
+                <form asp-controller="User" asp-action="ChangePassword" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="CurrentPassword" class="form-label">Current password</label>
+                        <input asp-for="CurrentPassword" type="password" class="form-control" />
+                        <span asp-validation-for="CurrentPassword" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewPassword" class="form-label">New password</label>
+                        <input asp-for="NewPassword" type="password" class="form-control" />
+                        <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="ConfirmNewPassword" class="form-label">Confirm new password</label>
+                        <input asp-for="ConfirmNewPassword" type="password" class="form-control" />
+                        <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark">Update password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

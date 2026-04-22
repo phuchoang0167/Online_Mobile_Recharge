@@ -1,0 +1,75 @@
+@if (Model?.ToLower() == "user")
+{
+    <a asp-controller="Home" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-house-door"></i>
+        <span>Home</span>
+    </a>
+    <a asp-controller="User" asp-action="Dashboard" class="sidebar-link">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+    </a>
+    <a asp-controller="User" asp-action="Profile" class="sidebar-link">
+        <i class="bi bi-person"></i>
+        <span>Profile</span>
+    </a>
+    <a asp-controller="User" asp-action="Settings" class="sidebar-link">
+        <i class="bi bi-gear"></i>
+        <span>Settings</span>
+    </a>
+    <a asp-controller="UserTransaction" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-clock-history"></i>
+        <span>Transactions</span>
+    </a>
+    <a asp-controller="User" asp-action="DataPackages" class="sidebar-link">
+        <i class="bi bi-wifi"></i>
+        <span>Data packages</span>
+    </a>
+    <a asp-controller="UserCard" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-credit-card-2-front"></i>
+        <span>Cards</span>
+    </a>
+    <a asp-controller="Dnd" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-shield-lock"></i>
+        <span>DND</span>
+    </a>
+    <a asp-controller="CallerTune" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-music-note-list"></i>
+        <span>Caller Tune</span>
+    </a>
+}
+
+@if (Model?.ToLower() == "admin")
+{
+    <a asp-controller="Home" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-house-door"></i>
+        <span>Home</span>
+    </a>
+    <a asp-controller="Admin" asp-action="Dashboard" class="sidebar-link">
+        <i class="bi bi-grid"></i>
+        <span>Dashboard</span>
+    </a>
+    <a asp-controller="Admin" asp-action="Users" class="sidebar-link">
+        <i class="bi bi-people"></i>
+        <span>Users</span>
+    </a>
+    <a asp-controller="Admin" asp-action="Feedbacks" class="sidebar-link">
+        <i class="bi bi-chat-square-text"></i>
+        <span>Feedbacks</span>
+    </a>
+    <a asp-controller="Admin" asp-action="Products" class="sidebar-link">
+        <i class="bi bi-box-seam"></i>
+        <span>Products</span>
+    </a>
+    <a asp-controller="Admin" asp-action="Sales" class="sidebar-link">
+        <i class="bi bi-tag"></i>
+        <span>Sales</span>
+    </a>
+    <a asp-controller="AdminTransaction" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-receipt"></i>
+        <span>Transactions</span>
+    </a>
+    <a asp-controller="AdminCallerTune" asp-action="Index" class="sidebar-link">
+        <i class="bi bi-music-note-list"></i>
+        <span>Caller Tunes</span>
+    </a>
+}

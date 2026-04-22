@@ -1,0 +1,393 @@
+@using Online_Mobile_Recharge.Models.Entities
+@using Online_Mobile_Recharge.Models.Enums
+@model List<Product>
+
+@{
+    ViewData["Title"] = "Products";
+    var pricingByProductId = ViewBag.PricingByProductId as Dictionary<int, Online_Mobile_Recharge.Models.ViewModels.ProductPricingInfoViewModel>
+        ?? new Dictionary<int, Online_Mobile_Recharge.Models.ViewModels.ProductPricingInfoViewModel>();
+    var campaignProducts = ViewBag.CampaignProducts as List<Product> ?? new List<Product>();
+}
+
+<section class="page-shell">
+    <div class="hero-banner compact-banner fade-in-up">
+        <div class="d-grid gap-3">
+            <span class="eyebrow">Products</span>
+            <h1 class="display-font">Find the right pack for recharge or bill payment.</h1>
+            <p class="lead-copy">
+                Search faster, filter by package type, and compare prices without leaving the same screen.
+            </p>
+        </div>
+
+        <div class="info-card">
+            <strong>Quick tip</strong>
+            <p class="mb-0">Use the filters below to switch between data packages and recharge card products.</p>
+        </div>
+    </div>
+
+    <div class="content-panel mb-4" id="phonePicker">
+        @{
+            var selectedPhone = (ViewBag.SelectedPhoneNumber as string) ?? string.Empty;
+            var hasSelectedPhone = !string.IsNullOrWhiteSpace(selectedPhone);
+            var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+        }
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="ui-icon-bubble soft-info"><i class="bi bi-telephone"></i></span>
+                <div>
+                    <div class="text-muted small">Selected phone number</div>
+                    <div class="fw-semibold">@(hasSelectedPhone ? selectedPhone : "Not selected")</div>
+                </div>
+            </div>
+
+            <button class="btn btn-outline-dark"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#phonePickerCollapse"
+                    aria-expanded="false"
+                    aria-controls="phonePickerCollapse">
+                @(hasSelectedPhone ? "Change phone" : "Select phone")
+            </button>
+        </div>
+
+        <div class="collapse @(hasSelectedPhone ? "" : "show") mt-3" id="phonePickerCollapse">
+            <form asp-controller="Phone" asp-action="Select" method="post" class="d-flex flex-column flex-md-row gap-2 align-items-md-end justify-content-center">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+
+                <div class="flex-grow-1" style="max-width: 420px;">
+                    <label class="form-label mb-1" for="phonePickerInput">Phone number</label>
+                    <input id="phonePickerInput"
+                           name="Phone"
+                           value="@selectedPhone"
+                           class="form-control"
+                           inputmode="numeric"
+                           placeholder="0xxxxxxxxx"
+                           required />
+                </div>
+
+                <button type="submit" class="btn btn-brand">Save phone</button>
+            </form>
+
+            <div class="small text-muted mt-2">
+                This phone number will be used for checkout (topup/postpaid).
+            </div>
+        </div>
+
+        @if (!hasSelectedPhone)
+        {
+            <div class="alert alert-warning mt-3 mb-0">
+                Please select a phone number first. You will use it for topup/bill payment checkout.
+            </div>
+        }
+    </div>
+
+    @if (campaignProducts.Any())
+    {
+        <div class="content-panel">
+            <div class="section-header-row mb-3">
+                <div>
+                    <span class="eyebrow">Active campaigns</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="ui-icon-bubble soft-danger"><i class="bi bi-lightning-charge"></i></span>
+                        <h2 class="section-heading display-font mb-0">Products on sale</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                @foreach (var p in campaignProducts)
+                {
+                    pricingByProductId.TryGetValue(p.Id, out var pricing);
+                    <div class="col-md-6 col-xl-3">
+
+                        <article class="product-spotlight h-100 is-clickable d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                                <div>
+                                    <span class="soft-pill mb-2">@p.Type</span>
+                                    <h5>@p.Name</h5>
+                                    <p class="product-meta mb-0">@p.Description</p>
+                                </div>
+                                <div class="d-flex flex-column gap-1 align-items-end">
+                                    @if (pricing?.HasSale == true)
+                                    {
+                                        <span class="badge text-bg-danger">Sale @pricing.SaleBadgeText</span>
+                                    }
+                                    @if (p.IsTop)
+                                    {
+                                        <span class="badge text-bg-primary">Top</span>
+                                    }
+                                    @if (p.IsSpecial)
+                                    {
+                                        <span class="badge text-bg-warning">Hot</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    @if (pricing?.HasSale == true)
+                                    {
+                                        <div class="d-flex flex-column">
+                                            <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
+                                            <strong class="display-font fs-4 text-danger">@pricing.EffectivePrice.ToString("N0") VND</strong>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <strong class="display-font fs-4">@p.Price.ToString("N0") VND</strong>
+                                    }
+                                </div>
+
+                                <div class="d-grid gap-2 mt-3">
+                                    <a asp-controller="Product"
+                                           asp-action="Buy"
+                                           asp-route-id="@p.Id"
+                                           class="btn btn-brand w-100 mt-3">
+                                        Buy now
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="content-panel">
+        <div class="row mb-4 g-2">
+            <div class="col-md-5">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by product name..." />
+            </div>
+
+            <div class="col-md-3">
+                <select id="typeFilter" class="form-select">
+                    <option value="all">All Types</option>
+                    <option value="Data">Data</option>
+                    <option value="Card">Card</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <select id="sortPrice" class="form-select">
+                    <option value="default">Sort by price</option>
+                    <option value="asc">Low to High</option>
+                    <option value="desc">High to Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-4" id="productList">
+            @foreach (var p in Model)
+            {
+                pricingByProductId.TryGetValue(p.Id, out var pricing);
+                <div class="col-md-6 col-xl-3 product-item"
+                     data-name="@p.Name.ToLowerInvariant()"
+                     data-type="@p.Type"
+                     data-price="@(pricing?.EffectivePrice ?? p.Price)"
+                     data-detail-url="@Url.Action("Detail", "Product", new { id = p.Id })"
+                     role="button"
+                     tabindex="0">
+
+                    <article class="product-spotlight h-100 is-clickable d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                <span class="soft-pill mb-2">@p.Type</span>
+                                <h5>@p.Name</h5>
+                                <p class="product-meta mb-0">@p.Description</p>
+                            </div>
+                            <div class="d-flex flex-column gap-1 align-items-end">
+                                @if (pricing?.HasSale == true)
+                                {
+                                    <span class="badge text-bg-danger">Sale @pricing.SaleBadgeText</span>
+                                }
+                                @if (p.IsTop)
+                                {
+                                    <span class="badge text-bg-primary">Top</span>
+                                }
+                                @if (p.IsSpecial)
+                                {
+                                    <span class="badge text-bg-warning">Hot</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                @if (pricing?.HasSale == true)
+                                {
+                                    <div class="d-flex flex-column">
+                                        <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
+                                        <strong class="display-font fs-4 text-danger">@pricing.EffectivePrice.ToString("N0") VND</strong>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <strong class="display-font fs-4">@p.Price.ToString("N0") VND</strong>
+                                }
+                            </div>
+
+                            <a asp-controller="Product"
+                               asp-action="Buy"
+                               asp-route-id="@p.Id"
+                               class="btn btn-brand w-100 mt-3">
+                                Buy now
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="button" onclick="loadMore()" class="btn btn-outline-dark rounded-pill px-4">Load more products</button>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    const searchInput = document.getElementById("searchInput");
+    const typeFilter = document.getElementById("typeFilter");
+    const sortPrice = document.getElementById("sortPrice");
+    const container = document.getElementById("productList");
+
+    let visibleCount = 8;
+
+    function getVisibleItems() {
+        return Array.from(document.querySelectorAll(".product-item"));
+    }
+
+    function applyFilters() {
+        const keyword = searchInput.value.toLowerCase();
+        const type = typeFilter.value;
+
+        getVisibleItems().forEach(item => {
+            const name = item.dataset.name;
+            const itemType = item.dataset.type;
+
+            const matchesKeyword = name.includes(keyword);
+            const matchesType = type === "all" || itemType === type;
+
+            item.dataset.matches = matchesKeyword && matchesType ? "true" : "false";
+        });
+
+        renderVisibleItems();
+    }
+
+    function renderVisibleItems() {
+        const items = getVisibleItems();
+        let shown = 0;
+
+        items.forEach(item => {
+            const matches = item.dataset.matches !== "false";
+            if (matches && shown < visibleCount) {
+                item.style.display = "block";
+                shown++;
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    function sortProducts() {
+        const items = getVisibleItems();
+        const type = sortPrice.value;
+
+        if (type === "asc") {
+            items.sort((a, b) => Number(a.dataset.price) - Number(b.dataset.price));
+        } else if (type === "desc") {
+            items.sort((a, b) => Number(b.dataset.price) - Number(a.dataset.price));
+        }
+
+        items.forEach(item => container.appendChild(item));
+        renderVisibleItems();
+    }
+
+    function loadMore() {
+        visibleCount += 8;
+        renderVisibleItems();
+    }
+
+    function isCardClickIgnored(target) {
+        if (!target) {
+            return false;
+        }
+
+        return Boolean(target.closest("a, button, input, select, textarea, label"));
+    }
+
+    function openProductDetail(card) {
+        const url = card?.dataset?.detailUrl;
+        if (!url) {
+            return;
+        }
+
+        window.location.href = url;
+    }
+
+    container.addEventListener("click", (event) => {
+        if (isCardClickIgnored(event.target)) {
+            return;
+        }
+
+        const card = event.target.closest(".product-item");
+        if (!card || card.style.display === "none") {
+            return;
+        }
+
+        openProductDetail(card);
+    });
+
+    container.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+
+        const card = event.target.closest(".product-item");
+        if (!card || card.style.display === "none") {
+            return;
+        }
+
+        event.preventDefault();
+        openProductDetail(card);
+    });
+
+    searchInput.addEventListener("input", () => {
+        visibleCount = 8;
+        applyFilters();
+    });
+
+    typeFilter.addEventListener("change", () => {
+        visibleCount = 8;
+        applyFilters();
+    });
+
+    sortPrice.addEventListener("change", sortProducts);
+
+    applyFilters();
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.location.hash !== "#phonePicker") {
+            return;
+        }
+
+        const collapseEl = document.getElementById("phonePickerCollapse");
+        if (!collapseEl || typeof bootstrap === "undefined") {
+            return;
+        }
+
+        const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+        collapse.show();
+
+        const input = document.getElementById("phonePickerInput");
+        if (input) {
+            input.focus();
+        }
+    });
+</script>
+}

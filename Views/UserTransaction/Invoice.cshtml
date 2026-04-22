@@ -1,0 +1,376 @@
+@model Online_Mobile_Recharge.Models.ViewModels.TransactionInvoiceViewModel
+@using Online_Mobile_Recharge.Models.Enums
+
+@{
+    Layout = null;
+    var transaction = Model.Transaction;
+    var isSuccess = transaction.Status == TransactionStatus.Success;
+    var isPending = transaction.Status == TransactionStatus.Pending;
+    var statusLabel = isSuccess ? "Paid" : isPending ? "Pending" : "Failed";
+    var statusClass = isSuccess ? "invoice-status success" : isPending ? "invoice-status pending" : "invoice-status failed";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invoice #@transaction.Id</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #dbe4f0;
+            --panel: #ffffff;
+            --soft: #f8fafc;
+            --brand: #0f766e;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Manrope", sans-serif;
+            color: var(--ink);
+            background: linear-gradient(180deg, #eefbf7 0%, #f8fafc 100%);
+            padding: 32px 18px;
+        }
+
+        .invoice-shell {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .invoice-toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .invoice-toolbar .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .invoice-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .invoice-btn.brand {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .invoice-btn.ghost {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid var(--line);
+        }
+
+        .invoice-card {
+            background: var(--panel);
+            border-radius: 28px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .invoice-head {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 24px;
+            padding: 32px;
+            background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
+            color: #fff;
+        }
+
+        .invoice-head h1 {
+            font-family: "Space Grotesk", sans-serif;
+            margin: 0 0 10px;
+            font-size: 2rem;
+        }
+
+        .invoice-head p {
+            margin: 0;
+            color: rgba(255,255,255,0.82);
+            line-height: 1.7;
+        }
+
+        .invoice-meta {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 22px;
+            padding: 18px 20px;
+        }
+
+        .invoice-meta div + div {
+            margin-top: 10px;
+        }
+
+        .invoice-meta span {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .invoice-meta strong {
+            font-size: 1rem;
+        }
+
+        .invoice-body {
+            padding: 32px;
+        }
+
+        .invoice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .invoice-panel {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 20px;
+        }
+
+        .invoice-panel h3 {
+            margin: 0 0 12px;
+            font-size: 1rem;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .invoice-panel p {
+            margin: 0 0 8px;
+            color: var(--muted);
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+        }
+
+        .invoice-table th,
+        .invoice-table td {
+            padding: 16px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .invoice-table thead th {
+            background: #f1f5f9;
+            font-size: 0.88rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .invoice-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .invoice-status {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.86rem;
+        }
+
+        .invoice-status.success { background: rgba(34, 197, 94, 0.12); color: #15803d; }
+        .invoice-status.pending { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+        .invoice-status.failed { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+        .invoice-total {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .invoice-total-box {
+            min-width: 280px;
+            background: #0f172a;
+            color: #fff;
+            border-radius: 22px;
+            padding: 22px 24px;
+        }
+
+        .invoice-total-box span {
+            color: rgba(255,255,255,0.68);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.78rem;
+        }
+
+        .invoice-total-box strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.8rem;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        .invoice-note {
+            margin-top: 24px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        @@media (max-width: 720px) {
+            .invoice-head,
+            .invoice-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .invoice-head,
+            .invoice-body {
+                padding: 22px;
+            }
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .invoice-toolbar {
+                display: none !important;
+            }
+
+            .invoice-card {
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+            }
+
+            .invoice-head {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .invoice-status {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-shell">
+        <div class="invoice-toolbar">
+            <div>
+                <strong>Invoice / Receipt</strong>
+                <div style="color:#64748b;">Use your browser print dialog and choose "Save as PDF".</div>
+            </div>
+            <div class="actions">
+                <a href="@Url.Action("Index", "UserTransaction")" class="invoice-btn ghost">Back to history</a>
+                <button type="button" class="invoice-btn brand" onclick="window.print()">Print / Save PDF</button>
+            </div>
+        </div>
+
+        <article class="invoice-card">
+            <section class="invoice-head">
+                <div>
+                    <h1>Online Mobile Recharge</h1>
+                    <p>
+                        Payment receipt for telecom services, recharge purchases, and postpaid bill settlement.
+                        This document can be printed or saved as a PDF and reporting purposes.
+                    </p>
+                </div>
+                <div class="invoice-meta">
+                    <div>
+                        <span>Invoice No.</span>
+                        <strong>#@transaction.Id</strong>
+                    </div>
+                    <div>
+                        <span>Issued</span>
+                        <strong>@transaction.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                    <div>
+                        <span>Status</span>
+                        <strong>@statusLabel</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="invoice-body">
+                <div class="invoice-grid">
+                    <div class="invoice-panel">
+                        <h3>Bill To</h3>
+                        <p><strong>@Model.User.Name</strong></p>
+                        <p>@Model.User.Email</p>
+                        <p>@Model.User.PhoneNumber</p>
+                    </div>
+                    <div class="invoice-panel">
+                        <h3>Service Details</h3>
+                        <p><strong>Product:</strong> @Model.ProductName</p>
+                        <p><strong>Phone number:</strong> @transaction.PhoneNumber</p>
+                        <p><strong>Payment method:</strong> @transaction.PaymentMethod</p>
+                        @if (transaction.Type == TransactionType.Postpaid)
+                        {
+                            <p><strong>National ID / CCCD:</strong> @(transaction.PostpaidNationalId ?? "-")</p>
+                            <p><strong>Billing address:</strong> @(transaction.PostpaidBillingAddress ?? "-")</p>
+                        }
+                    </div>
+                </div>
+
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@Model.ProductName</td>
+                            <td>@transaction.Type</td>
+                            <td><span class="@statusClass">@statusLabel</span></td>
+                            <td>@(transaction.DueDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td>@transaction.Amount.ToString("N0") VND</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="invoice-total">
+                    <div class="invoice-total-box">
+                        <span>Total amount</span>
+                        <strong>@transaction.Amount.ToString("N0") VND</strong>
+                    </div>
+                </div>
+
+                <div class="invoice-note">
+                    <p><strong>Note:</strong> If your browser does not have a PDF button, choose <em>Print</em> and then select <em>Save as PDF</em> in the destination dialog.</p>
+                </div>
+            </section>
+        </article>
+    </div>
+</body>
+</html>

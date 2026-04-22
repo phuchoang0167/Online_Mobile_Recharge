@@ -1,0 +1,32 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    U[User]
+    LV((Login / Register / Verify Views))
+    AC((AccountController))
+    PH((PasswordHelper))
+    ATH((AuthTokenHelper))
+    ENS((EmailNotificationService))
+    SS((Session / Cookie Auth))
+    DB[(Users)]
+    SMTP[Email]
+
+    U --> LV
+    LV --> AC
+
+    AC --> PH
+    PH --> DB
+
+    AC --> ATH
+    ATH --> DB
+
+    AC --> ENS
+    ENS --> SMTP
+
+    AC --> DB
+    DB --> AC
+
+    AC --> SS
+    SS --> LV
+
+    SMTP --> LV

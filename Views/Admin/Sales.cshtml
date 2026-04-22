@@ -1,0 +1,205 @@
+@using Online_Mobile_Recharge.Models.Enums
+@using Online_Mobile_Recharge.Models.Entities
+@using Online_Mobile_Recharge.Models.ViewModels
+@model AdminSalesPageViewModel
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Sales";
+    var now = DateTime.Now;
+    var filter = Model.Filter ?? "active";
+}
+
+<div class="content-panel">
+    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+        <div>
+            <h3 class="display-font mb-1">Sales</h3>
+            <p class="text-muted mb-0">Sales table + manage product sale campaigns (percent or fixed amount).</p>
+        </div>
+        <a asp-action="CreateSale" class="btn btn-brand btn-sm">Create sale</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="Sales" asp-route-filter="active" class="btn btn-outline-dark btn-sm @(filter == "active" ? "active" : null)">Active</a>
+        <a asp-action="Sales" asp-route-filter="upcoming" class="btn btn-outline-dark btn-sm @(filter == "upcoming" ? "active" : null)">Upcoming</a>
+        <a asp-action="Sales" asp-route-filter="expired" class="btn btn-outline-dark btn-sm @(filter == "expired" ? "active" : null)">Expired</a>
+        <a asp-action="Sales" asp-route-filter="all" class="btn btn-outline-dark btn-sm @(filter == "all" ? "active" : null)">All</a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Sale</h5>
+
+            @if (!Model.Sales.Any())
+            {
+                <div class="empty-state">No sales found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 app-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th class="text-end">Value</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sale in Model.Sales)
+                            {
+                                var isActive = sale.IsEnabled &&
+                                               sale.SaleType != ProductSaleType.None &&
+                                               sale.SaleValue > 0 &&
+                                               (sale.StartAt == null || sale.StartAt <= now) &&
+                                               (sale.EndAt == null || sale.EndAt >= now);
+
+                                var isUpcoming = sale.StartAt != null && sale.StartAt > now;
+                                var isExpired = sale.EndAt != null && sale.EndAt < now;
+
+                                <tr>
+                                    <td style="min-width: 260px;">
+                                        <strong>@sale.Name</strong>
+                                        <div class="small text-muted">#@sale.Id</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">@sale.SaleType</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (sale.SaleType == ProductSaleType.Percent)
+                                        {
+                                            <span>-@sale.SaleValue.ToString("N0")%</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-@sale.SaleValue.ToString("N0") VND</span>
+                                        }
+                                    </td>
+                                    <td>@(sale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>@(sale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else if (isUpcoming)
+                                        {
+                                            <span class="badge bg-info text-dark">Upcoming</span>
+                                        }
+                                        else if (isExpired)
+                                        {
+                                            <span class="badge bg-secondary">Expired</span>
+                                        }
+                                        else if (!sale.IsEnabled)
+                                        {
+                                            <span class="badge bg-light text-dark">Disabled</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark">Inactive</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">Product Sale</h5>
+
+            @if (!Model.ProductSales.Any())
+            {
+                <div class="empty-state">No product sales found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 app-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Type</th>
+                                <th class="text-end">Value</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
+                                <th style="width: 180px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var productSale in Model.ProductSales)
+                            {
+                                var isActive = productSale.SaleType != ProductSaleType.None &&
+                                               productSale.SaleValue > 0 &&
+                                               (productSale.StartAt == null || productSale.StartAt <= now) &&
+                                               (productSale.EndAt == null || productSale.EndAt >= now);
+
+                                var isUpcoming = productSale.StartAt != null && productSale.StartAt > now;
+                                var isExpired = productSale.EndAt != null && productSale.EndAt < now;
+
+                                <tr>
+                                    <td style="min-width: 260px;">
+                                        <strong>@(productSale.Product?.Name ?? $"Product #{productSale.ProductId}")</strong>
+                                        <div class="small text-muted">#@productSale.Id</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">@productSale.SaleType</span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (productSale.SaleType == ProductSaleType.Percent)
+                                        {
+                                            <span>-@productSale.SaleValue.ToString("N0")%</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-@productSale.SaleValue.ToString("N0") VND</span>
+                                        }
+                                    </td>
+                                    <td>@(productSale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>@(productSale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else if (isUpcoming)
+                                        {
+                                            <span class="badge bg-info text-dark">Upcoming</span>
+                                        }
+                                        else if (isExpired)
+                                        {
+                                            <span class="badge bg-secondary">Expired</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark">Inactive</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="EditSale" asp-route-id="@productSale.Id" class="btn btn-outline-dark btn-sm">Edit</a>
+                                        <form asp-action="DeleteSale" asp-route-id="@productSale.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
