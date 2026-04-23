@@ -32,6 +32,7 @@
 - `Users.NationalId` and `Users.BillingAddress` store an optional billing profile (editable by user/admin).
 - `Transactions.ProductId` is optional.
 - `AdminAuditLogs` stores admin change history (entity type/id, action, summary, old/new json).
+- `Transactions.PaymentExternalId` and `Transactions.PaymentExternalPayerId` store external payment references (ex: PayPal order id / payer id) when using PayPal Sandbox.
 - Optional postpaid fields are stored per transaction:
   - `Transactions.PostpaidNationalId`
   - `Transactions.PostpaidBillingAddress`

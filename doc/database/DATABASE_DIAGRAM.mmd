@@ -5,8 +5,11 @@ erDiagram
     USERS ||--o| DNDSETTINGS : configures
     DNDSETTINGS ||--o{ DNDNUMBERS : contains
     USERS ||--o{ CALLERTUNES : uploads
+    USERS ||--o| USERCALLERTUNESETTINGS : configures
+    USERS ||--o| CALLERTUNESUBSCRIPTIONS : subscribes
     PRODUCTS ||--o{ TRANSACTIONS : sold_in
     PRODUCTS ||--o{ FEEDBACKS : reviewed_in
     PRODUCTS ||--o{ PRODUCTSALES : has
     TRANSACTIONS ||--o{ FEEDBACKS : references
     PRODUCTS ||--o{ PHONEDATASUBSCRIPTIONS : activates
+    SALES ||--o{ PRODUCTSALES : defines

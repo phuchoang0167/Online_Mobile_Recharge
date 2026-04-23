@@ -5,7 +5,7 @@ flowchart TD
     PV((Product List + Detail))
     GCV((Guest Checkout View))
     GSV((Guest Success Page))
-    PP((PayPal Approval))
+    PP[PayPal Sandbox]
 
     PC((ProductController))
     GCC((GuestCheckoutController))
@@ -24,4 +24,3 @@ flowchart TD
     %% Guest PayPal flow
     GCC --> GPC --> PP --> GPC --> TS --> DB
     DB --> TS --> GPC --> GSV
-

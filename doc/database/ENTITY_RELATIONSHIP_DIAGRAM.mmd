@@ -4,10 +4,15 @@ erDiagram
     USERS ||--o{ CARDS : "1..many"
     USERS ||--o| DNDSETTINGS : "1..1"
     USERS ||--o{ CALLERTUNES : "1..many"
+    USERS ||--o| USERCALLERTUNESETTINGS : "1..1"
+    USERS ||--o| CALLERTUNESUBSCRIPTIONS : "1..1"
     DNDSETTINGS ||--o{ DNDNUMBERS : "1..many"
     PRODUCTS ||--o{ TRANSACTIONS : "1..many"
     PRODUCTS ||--o{ FEEDBACKS : "1..many"
+    PRODUCTS ||--o{ PRODUCTSALES : "1..many"
+    PRODUCTS ||--o{ PHONEDATASUBSCRIPTIONS : "1..many"
     TRANSACTIONS ||--o{ FEEDBACKS : "1..many"
+    SALES ||--o{ PRODUCTSALES : "1..many"
 
     USERS {
         int Id PK
@@ -16,6 +21,8 @@ erDiagram
         string Password
         string Role
         string PhoneNumber
+        string NationalId
+        string BillingAddress
         bool EmailVerified
         string EmailVerificationTokenHash
         datetime EmailVerificationTokenExpiresAt
@@ -23,6 +30,9 @@ erDiagram
         datetime PasswordResetTokenExpiresAt
         bool IsActive
         bool IsDeleted
+        string LastLockReason
+        string LastLockNote
+        datetime LastLockedAt
         datetime CreatedAt
     }
 
@@ -47,6 +57,12 @@ erDiagram
         string Status
         datetime DueDate
         bool IsPaid
+        string PostpaidNationalId
+        string PostpaidBillingAddress
+        datetime PostpaidAgreedAt
+        datetime PostpaidContractAgreedAt
+        string PaymentExternalId
+        string PaymentExternalPayerId
         datetime CreatedAt
     }
 
@@ -94,4 +110,52 @@ erDiagram
         string FilePath
         bool IsActive
         datetime CreatedAt
+    }
+
+    USERCALLERTUNESETTINGS {
+        int Id PK
+        int UserId FK
+        int CallerTuneId FK
+        bool IsEnabled
+    }
+
+    CALLERTUNESUBSCRIPTIONS {
+        int Id PK
+        int UserId FK
+        datetime ActivatedAt
+        datetime ExpiresAt
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    SALES {
+        int Id PK
+        string Name
+        string SaleType
+        decimal SaleValue
+        datetime StartAt
+        datetime EndAt
+        bool IsEnabled
+        datetime CreatedAt
+    }
+
+    PRODUCTSALES {
+        int Id PK
+        int ProductId FK
+        int SaleId FK
+        string SaleType
+        decimal SaleValue
+        datetime StartAt
+        datetime EndAt
+        datetime CreatedAt
+    }
+
+    PHONEDATASUBSCRIPTIONS {
+        int Id PK
+        string PhoneNumber
+        int ProductId FK
+        datetime ActivatedAt
+        datetime ExpiresAt
+        datetime CreatedAt
+        datetime UpdatedAt
     }
