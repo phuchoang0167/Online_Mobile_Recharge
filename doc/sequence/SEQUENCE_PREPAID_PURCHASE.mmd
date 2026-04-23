@@ -4,28 +4,51 @@ sequenceDiagram
     participant Checkout as Checkout View
     participant ProductController as ProductController
     participant CheckoutController as CheckoutController
+    participant PaymentController as PaymentController
     participant TxService as TransactionService
     participant DB as Database
     participant Success as Success View
+    participant PayPal as PayPal Sandbox
 
     User->>Product: Click Buy
     Product->>ProductController: GET /Product/Buy/{id}
     ProductController-->>Checkout: Redirect to checkout
 
-    User->>Checkout: Confirm selected phone + payment info
-    Checkout->>CheckoutController: POST /Checkout/Process
-    CheckoutController->>TxService: Process prepaid transaction
-    TxService->>DB: Load product + card/user data
-    DB-->>TxService: Product + card
-    TxService->>DB: Validate balance/CVV/expiry
-    DB-->>TxService: Validation result
+    User->>Checkout: Review order + choose payment method
+    Checkout->>CheckoutController: POST /Checkout/Review
 
-    alt Payment success
-        TxService->>DB: Save transaction Success
+    User->>Checkout: Confirm payment
+    Checkout->>CheckoutController: POST /Checkout/Confirm
+    CheckoutController->>TxService: Process prepaid transaction
+
+    alt Payment method = Card
+        TxService->>DB: Load product + card/user data
+        DB-->>TxService: Product + card
+        TxService->>DB: Validate balance/CVV/expiry
+        DB-->>TxService: Validation result
+
+        alt Payment success
+            TxService->>DB: Save transaction Success
+            DB-->>TxService: Saved
+            TxService-->>CheckoutController: Success result
+            CheckoutController-->>Success: Redirect to success page
+        else Payment fail
+            TxService-->>CheckoutController: Error result
+            CheckoutController-->>Checkout: Return form with error
+        end
+    else Payment method = PayPal (Sandbox)
+        TxService->>DB: Save pending transaction (PayPalSandbox)
         DB-->>TxService: Saved
-        TxService-->>CheckoutController: Success result
-        CheckoutController-->>Success: Redirect to success page
-    else Payment fail
-        TxService-->>CheckoutController: Error result
-        CheckoutController-->>Checkout: Return form with error
+        TxService-->>CheckoutController: Pending result
+        CheckoutController-->>PaymentController: Redirect /Payment/PayPal/{txId}
+        PaymentController->>PayPal: Create order + get approval URL
+        PayPal-->>PaymentController: Approve URL
+        PaymentController-->>User: Redirect to PayPal approval
+        User->>PayPal: Approve payment
+        PayPal-->>PaymentController: Redirect /Payment/PayPalReturn?tx=...&token=...&PayerID=...
+        PaymentController->>TxService: CompletePayPalApprovedAsync
+        TxService->>DB: Mark transaction Success + activate service
+        DB-->>TxService: Updated
+        TxService-->>PaymentController: Success
+        PaymentController-->>Success: Redirect to success page
     end

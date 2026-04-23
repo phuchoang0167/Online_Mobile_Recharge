@@ -58,6 +58,28 @@
                 </div>
             </div>
 
+            @if (TempData["LastAuditLogId"] != null && string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="ui-banner">
+                    <div class="ui-banner-body">
+                        <div>
+                            <div class="ui-banner-title">
+                                <span class="ui-banner-icon"><i class="bi bi-journal-text"></i></span>
+                                <div>
+                                    <strong>Audit recorded</strong>
+                                    <div class="small text-muted">@((TempData["LastAuditLogSummary"] as string) ?? "A change has been logged.")</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a class="btn btn-outline-dark btn-sm ui-banner-cta"
+                           href="@Url.Action("AuditLogs", "Admin", new { id = TempData["LastAuditLogId"] })">
+                            View log #@TempData["LastAuditLogId"]
+                        </a>
+                    </div>
+                    <img class="ui-banner-art" src="~/images/ui-divider.svg" alt="" aria-hidden="true" />
+                </div>
+            }
+
             @RenderBody()
         </main>
     </div>

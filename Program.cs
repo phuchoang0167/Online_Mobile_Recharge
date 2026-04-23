@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Online_Mobile_Recharge.Models.Configuration;
 using Online_Mobile_Recharge.Services;
+using Online_Mobile_Recharge.Services.Auditing;
 
 var builder = WebApplication.CreateBuilder(args);
 var smtpSection = builder.Configuration.GetSection("Email:Smtp");
@@ -9,8 +11,11 @@ var appUrlSection = builder.Configuration.GetSection("App");
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<MobileRechargeDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<EntityAuditSaveChangesInterceptor>();
+builder.Services.AddDbContext<MobileRechargeDbContext>((sp, options) =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .AddInterceptors(sp.GetRequiredService<EntityAuditSaveChangesInterceptor>()));
 builder.Services.Configure<SmtpOptions>(smtpSection);
 builder.Services.Configure<AppUrlOptions>(appUrlSection);
 builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
@@ -22,6 +27,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<EmailNotificationService>();
 builder.Services.AddHttpClient<PayPalService>();
 builder.Services.AddScoped<AdminAuditService>();
+builder.Services.AddSingleton<IValidateOptions<PayPalOptions>, PayPalOptionsValidation>();
 
 builder.Services.AddSession();
 
@@ -52,10 +58,11 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
     DbInitializer.Seed(context);
 }
+app.UseHttpsRedirection();
+app.UseHsts();
 
 app.UseSession();
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

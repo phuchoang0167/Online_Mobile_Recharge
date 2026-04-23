@@ -14,6 +14,8 @@ public class SettlePostpaidViewModel
 
     public string ProductName { get; set; } = string.Empty;
 
+    public string PaymentMethod { get; set; } = "card";
+
     [Required(ErrorMessage = "Please enter the card number.")]
     [RegularExpression(@"^\d{16}$", ErrorMessage = "The card number must contain exactly 16 digits.")]
     public string CardNumber { get; set; } = string.Empty;

@@ -4,9 +4,11 @@ flowchart TD
     U[User]
     CV((Checkout View))
     HV((Transaction History + Pay Bill))
+    PP((PayPal Approval))
 
     CC((CheckoutController))
     UTC((UserTransactionController))
+    PAY((PaymentController))
     TS((TransactionService))
     ENS((EmailNotificationService))
 
@@ -15,9 +17,14 @@ flowchart TD
     U --> CV --> CC --> TS --> DB
     DB --> TS --> CC
 
-    %% Postpaid: requires NationalId + BillingAddress + AgreeToTerms (stored per Transaction and also saved to User profile)
     CC --> ENS
     ENS --> U
 
+    %% Pay bill: Card flow (settle immediately)
     U --> HV --> UTC --> TS --> DB
     DB --> TS --> UTC --> HV
+
+    %% Pay bill: PayPal flow (begin checkout -> redirect -> return -> complete)
+    UTC --> TS --> DB
+    UTC --> PAY --> PP --> PAY --> TS --> DB
+    DB --> TS --> PAY --> HV

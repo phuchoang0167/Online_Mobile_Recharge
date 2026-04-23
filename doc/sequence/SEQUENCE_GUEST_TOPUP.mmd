@@ -1,0 +1,44 @@
+sequenceDiagram
+    actor Guest
+    participant Product as Product View
+    participant GuestCheckout as Guest Checkout View
+    participant ProductController as ProductController
+    participant GuestCheckoutController as GuestCheckoutController
+    participant GuestPaymentController as GuestPaymentController
+    participant TxService as TransactionService
+    participant DB as Database
+    participant PayPal as PayPal Sandbox
+    participant Success as Guest Success View
+
+    Guest->>Product: Click Buy (topup)
+    Product->>ProductController: GET /Product/Buy/{id}
+    ProductController-->>GuestCheckout: Redirect /GuestCheckout?productId={id}
+
+    Guest->>GuestCheckout: Enter phone + choose Card/PayPal
+    GuestCheckout->>GuestCheckoutController: POST /GuestCheckout/Pay
+    GuestCheckoutController->>TxService: ProcessPayment (prepaid)
+
+    alt Payment method = Card
+        TxService->>DB: Match card record (demo cards)
+        DB-->>TxService: Card + validation
+        TxService->>DB: Save transaction Success
+        DB-->>TxService: Saved
+        TxService-->>GuestCheckoutController: Success
+        GuestCheckoutController-->>Success: Redirect to guest success
+    else Payment method = PayPal (Sandbox)
+        TxService->>DB: Save pending transaction (PayPalSandbox)
+        DB-->>TxService: Saved
+        TxService-->>GuestCheckoutController: Pending
+        GuestCheckoutController-->>GuestPaymentController: Redirect /GuestPayment/PayPal/{txId}
+        GuestPaymentController->>PayPal: Create order + get approval URL
+        PayPal-->>GuestPaymentController: Approve URL
+        GuestPaymentController-->>Guest: Redirect to PayPal approval
+        Guest->>PayPal: Approve payment
+        PayPal-->>GuestPaymentController: Redirect /GuestPayment/PayPalReturn?tx=...&token=...&PayerID=...
+        GuestPaymentController->>TxService: CompletePayPalApprovedAsync
+        TxService->>DB: Mark transaction Success + activate service
+        DB-->>TxService: Updated
+        TxService-->>GuestPaymentController: Success
+        GuestPaymentController-->>Success: Redirect to guest success
+    end
+

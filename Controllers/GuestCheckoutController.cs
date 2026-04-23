@@ -48,7 +48,13 @@ public class GuestCheckoutController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Pay(int productId, string? phone, string? cardNumber, string? cvv, string? expiry)
+    public async Task<IActionResult> Pay(
+        int productId,
+        string? phone,
+        string? paymentMethod,
+        string? cardNumber,
+        string? cvv,
+        string? expiry)
     {
         if (HttpContext.Session.GetInt32("UserId") != null)
         {
@@ -77,24 +83,42 @@ public class GuestCheckoutController : Controller
         HttpContext.Session.SetString(SelectedPhoneSessionKey, phone);
         var guestUser = await GetOrCreateGuestUserAsync(phone);
 
+        var normalizedMethod = (paymentMethod ?? string.Empty).Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedMethod))
+        {
+            normalizedMethod = "card";
+        }
+
+        if (normalizedMethod is not ("card" or "paypal"))
+        {
+            TempData["ErrorMessage"] = "Invalid payment method.";
+            return RedirectToAction(nameof(Index), new { productId });
+        }
+
         var result = _service.ProcessPayment(
             productId,
             guestUser.Id,
             phone,
             type: "prepaid",
-            prepaidPaymentMethod: "card",
+            prepaidPaymentMethod: normalizedMethod,
             postpaidNationalId: null,
             postpaidBillingAddress: null,
             postpaidAgreeToTerms: false,
             postpaidAgreeToContract: false,
-            cardNumber,
-            cvv,
-            expiry);
+            cardNumber: normalizedMethod == "card" ? cardNumber : null,
+            cvv: normalizedMethod == "card" ? cvv : null,
+            expiry: normalizedMethod == "card" ? expiry : null);
 
         if (!result.IsSuccess || result.Transaction == null)
         {
             TempData["ErrorMessage"] = result.ErrorMessage ?? "Could not process this payment.";
             return RedirectToAction(nameof(Index), new { productId });
+        }
+
+        if (result.Transaction.Status == TransactionStatus.Pending &&
+            result.Transaction.PaymentMethod == PaymentMethod.PayPalSandbox)
+        {
+            return RedirectToAction("PayPal", "GuestPayment", new { id = result.Transaction.Id });
         }
 
         TempData["SuccessMessage"] = "Topup payment completed successfully.";

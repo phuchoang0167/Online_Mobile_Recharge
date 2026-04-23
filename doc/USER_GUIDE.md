@@ -37,20 +37,14 @@
 
 ### Guest (Not Logged In)
 - Guests can only purchase `Topup` (recharge) products from `/Product`.
-- Guest topup checkout uses `/GuestCheckout` (manual demo card entry).
-
-### Postpaid Required Info
-When choosing `Postpaid`, you must provide:
-- `National ID / CCCD` (9 or 12 digits)
-- `Billing address`
-- Agree to the postpaid terms
-These values are stored on the postpaid `Transaction` and also saved to your user profile for future prefilling.
+- Guest topup checkout uses `/GuestCheckout` (Card manual entry or PayPal Sandbox).
 
 ## Pay a Postpaid Bill
 - Open `/User/Transaction`
 - Find a transaction with `Pending` status
 - Click `Pay Now`
-- Choose a saved card (or enter card number, expiry, and CVV manually)
+- Choose Card or PayPal Sandbox
+- If you choose Card, select a saved card (or enter card number, expiry, and CVV manually)
 - Confirm payment
 
 ## Demo Cards
@@ -61,7 +55,7 @@ These values are stored on the postpaid `Transaction` and also saved to your use
 - Demo balance is set automatically from `doc/DEMO_DATA.md`
 - During checkout, you can select a saved card directly (or enter the same saved card details manually)
 - Balance is deducted automatically by prepaid checkout and postpaid bill payment
-- Use `doc/DEMO_DATA.md` for the demo accounts and 5 sample cards to add
+- Use `doc/DEMO_DATA.md` for the demo accounts and 5 sample cards (seeded on first run; can also be added manually)
 
 ## Export a Bill
 - After checkout, use `Print / Save Bill as PDF`
@@ -104,6 +98,7 @@ These values are stored on the postpaid `Transaction` and also saved to your use
   - `/Admin/Users`
   - `/Admin/Transaction`
   - `/Admin/Feedbacks`
+  - `/Admin/AuditLogs` (view admin change history)
 
 ## Notifications
 - Open the bell icon in the top area

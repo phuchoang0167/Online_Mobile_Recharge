@@ -33,7 +33,7 @@ public class PaymentController : Controller
         var transaction = _context.Transactions.FirstOrDefault(x => x.Id == id && x.UserId == userId);
 
         if (transaction == null ||
-            transaction.Type != TransactionType.Prepaid ||
+            (transaction.Type != TransactionType.Prepaid && transaction.Type != TransactionType.Postpaid) ||
             transaction.Status != TransactionStatus.Pending ||
             transaction.PaymentMethod != PaymentMethod.PayPalSandbox)
         {
@@ -84,6 +84,12 @@ public class PaymentController : Controller
             return RedirectToAction("Index", "UserTransaction");
         }
 
+        if (result.Transaction.Type == TransactionType.Postpaid)
+        {
+            TempData["SuccessMessage"] = "Your postpaid bill was paid successfully.";
+            return RedirectToAction("Index", "UserTransaction");
+        }
+
         return RedirectToAction("Success", "Checkout", new { id = result.Transaction.Id });
     }
 
@@ -91,7 +97,7 @@ public class PaymentController : Controller
     public IActionResult PayPalCancel(int tx)
     {
         var userId = HttpContext.Session.GetInt32("UserId")!.Value;
-        _transactionService.MarkPrepaidFailed(tx, userId, "PayPal checkout canceled.");
+        _transactionService.CancelPayPalCheckout(tx, userId, "PayPal checkout canceled.");
         TempData["ErrorMessage"] = "Payment canceled.";
         return RedirectToAction("Index", "UserTransaction");
     }

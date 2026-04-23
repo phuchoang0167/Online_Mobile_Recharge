@@ -5,9 +5,11 @@ flowchart TD
     PV((Product List + Detail))
     CV((Checkout View))
     SV((Success Page))
+    PP((PayPal Approval))
 
     PC((ProductController))
     CC((CheckoutController))
+    PAY((PaymentController))
     TS((TransactionService))
     FS((FeedbackService))
 
@@ -17,7 +19,13 @@ flowchart TD
     DB --> PC --> PV
 
     U --> CV --> CC --> TS --> DB
+
+    %% Card flow: complete immediately
     DB --> TS --> CC --> SV
+
+    %% PayPal flow: pending -> redirect -> return -> complete
+    CC --> PAY --> PP --> PAY --> TS --> DB
+    DB --> TS --> PAY --> SV
 
     %% Feedback is available after successful purchase
     PV --> PC --> FS --> DB

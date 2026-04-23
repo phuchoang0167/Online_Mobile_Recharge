@@ -532,7 +532,7 @@ public class TransactionService
             .FirstOrDefault(x =>
                 x.Id == transactionId &&
                 x.UserId == userId &&
-                x.Type == TransactionType.Prepaid &&
+                (x.Type == TransactionType.Prepaid || x.Type == TransactionType.Postpaid) &&
                 x.Status == TransactionStatus.Pending &&
                 x.PaymentMethod == PaymentMethod.PayPalSandbox);
 
@@ -630,6 +630,63 @@ public class TransactionService
         {
             Transaction = transaction
         };
+    }
+
+    public PaymentProcessResult BeginPayPalForPostpaid(int transactionId, int userId)
+    {
+        var transaction = _context.Transactions.FirstOrDefault(x =>
+            x.Id == transactionId &&
+            x.UserId == userId &&
+            x.Type == TransactionType.Postpaid &&
+            x.Status == TransactionStatus.Pending &&
+            !x.IsPaid);
+
+        if (transaction == null)
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "Pending postpaid bill not found."
+            };
+        }
+
+        transaction.PaymentMethod = PaymentMethod.PayPalSandbox;
+        transaction.PaymentExternalId = null;
+        transaction.PaymentExternalPayerId = null;
+        _context.SaveChanges();
+
+        return new PaymentProcessResult
+        {
+            Transaction = transaction
+        };
+    }
+
+    public void CancelPayPalCheckout(int transactionId, int userId, string reason)
+    {
+        var transaction = _context.Transactions.FirstOrDefault(x =>
+            x.Id == transactionId &&
+            x.UserId == userId &&
+            x.Status == TransactionStatus.Pending &&
+            x.PaymentMethod == PaymentMethod.PayPalSandbox);
+
+        if (transaction == null)
+        {
+            return;
+        }
+
+        if (transaction.Type == TransactionType.Prepaid)
+        {
+            transaction.Status = TransactionStatus.Failed;
+            transaction.IsPaid = false;
+        }
+        else if (transaction.Type == TransactionType.Postpaid)
+        {
+            transaction.PaymentMethod = PaymentMethod.Postpaid;
+            transaction.PaymentExternalId = null;
+            transaction.PaymentExternalPayerId = null;
+            transaction.IsPaid = false;
+        }
+
+        _context.SaveChanges();
     }
 
     public void MarkPrepaidFailed(int transactionId, int userId, string reason)

@@ -435,6 +435,25 @@ public static class DbInitializer
             cards.AddRange(BuildDemoCardsForUser(user.Id));
         }
 
+        var seedUserId = users.FirstOrDefault()?.Id;
+        if (seedUserId != null)
+        {
+            foreach (var info in DemoCardCatalog.GetAll())
+            {
+                cards.Add(new Card
+                {
+                    UserId = seedUserId.Value,
+                    CardNumber = info.CardNumber,
+                    CVV = info.CVV,
+                    Balance = info.InitialBalance,
+                    Price = 0,
+                    ExpiryDate = new DateTime(info.ExpiryYear, info.ExpiryMonth, 1)
+                        .AddMonths(1)
+                        .AddDays(-1)
+                });
+            }
+        }
+
         if (!cards.Any())
         {
             return;

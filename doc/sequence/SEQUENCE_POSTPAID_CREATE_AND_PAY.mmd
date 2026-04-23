@@ -5,11 +5,16 @@ sequenceDiagram
     participant PayView as Pay Postpaid View
     participant CheckoutController as CheckoutController
     participant UserTx as UserTransactionController
+    participant PaymentController as PaymentController
     participant TxService as TransactionService
     participant DB as Database
+    participant PayPal as PayPal Sandbox
 
     User->>Checkout: Choose postpaid payment type
-    Checkout->>CheckoutController: POST /Checkout/Process
+    Checkout->>CheckoutController: POST /Checkout/Review
+
+    User->>Checkout: Confirm order
+    Checkout->>CheckoutController: POST /Checkout/Confirm
     CheckoutController->>TxService: Create postpaid bill
     TxService->>DB: Save Pending transaction + due date
     DB-->>TxService: Saved
@@ -22,18 +27,37 @@ sequenceDiagram
     DB-->>UserTx: Bill + cards
     UserTx-->>PayView: Show payment form
 
-    User->>PayView: Confirm card and CVV
+    User->>PayView: Choose Card or PayPal
     PayView->>UserTx: POST /User/Transaction/Pay/{id}
-    UserTx->>TxService: Settle postpaid bill
-    TxService->>DB: Validate card + balance + bill state
-    DB-->>TxService: Validation result
 
-    alt Settle success
-        TxService->>DB: Update transaction to Success
+    alt Payment method = Card
+        UserTx->>TxService: Settle postpaid bill
+        TxService->>DB: Validate card + balance + bill state
+        DB-->>TxService: Validation result
+
+        alt Settle success
+            TxService->>DB: Update transaction to Success
+            DB-->>TxService: Updated
+            TxService-->>UserTx: Success
+            UserTx-->>History: Redirect with success message
+        else Settle fail
+            TxService-->>UserTx: Failure
+            UserTx-->>PayView: Return form with error
+        end
+    else Payment method = PayPal (Sandbox)
+        UserTx->>TxService: BeginPayPalForPostpaid
+        TxService->>DB: Mark bill PaymentMethod=PayPalSandbox (Pending)
         DB-->>TxService: Updated
-        TxService-->>UserTx: Success
-        UserTx-->>History: Redirect with success message
-    else Settle fail
-        TxService-->>UserTx: Failure
-        UserTx-->>PayView: Return form with error
+        TxService-->>UserTx: Pending result
+        UserTx-->>PaymentController: Redirect /Payment/PayPal/{txId}
+        PaymentController->>PayPal: Create order + get approval URL
+        PayPal-->>PaymentController: Approve URL
+        PaymentController-->>User: Redirect to PayPal approval
+        User->>PayPal: Approve payment
+        PayPal-->>PaymentController: Redirect /Payment/PayPalReturn?tx=...&token=...&PayerID=...
+        PaymentController->>TxService: CompletePayPalApprovedAsync
+        TxService->>DB: Mark bill Success
+        DB-->>TxService: Updated
+        TxService-->>PaymentController: Success
+        PaymentController-->>History: Redirect to transaction history
     end

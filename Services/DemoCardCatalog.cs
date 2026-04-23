@@ -28,4 +28,9 @@ public static class DemoCardCatalog
 
         return Cards.TryGetValue(cardNumber.Trim(), out info);
     }
+
+    public static IReadOnlyCollection<DemoCardInfo> GetAll()
+    {
+        return Cards.Values.ToList().AsReadOnly();
+    }
 }

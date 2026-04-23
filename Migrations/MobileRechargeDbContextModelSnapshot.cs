@@ -21,38 +21,6 @@ namespace Online_Mobile_Recharge.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Online_Mobile_Recharge.Models.Entities.CallerTune", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CreatedByAdminId")
-                        .HasColumnType("int")
-                        .HasColumnName("UserId");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CallerTunes");
-                });
-
             modelBuilder.Entity("Online_Mobile_Recharge.Models.Entities.AdminAuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -93,9 +61,39 @@ namespace Online_Mobile_Recharge.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EntityType", "EntityId", "CreatedAt");
-
                     b.ToTable("AdminAuditLogs");
+                });
+
+            modelBuilder.Entity("Online_Mobile_Recharge.Models.Entities.CallerTune", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedByAdminId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserId");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CallerTunes");
                 });
 
             modelBuilder.Entity("Online_Mobile_Recharge.Models.Entities.CallerTuneSubscription", b =>
@@ -542,9 +540,6 @@ namespace Online_Mobile_Recharge.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("LastLockedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("LastLockNote")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -552,6 +547,9 @@ namespace Online_Mobile_Recharge.Migrations
                     b.Property<string>("LastLockReason")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("LastLockedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()

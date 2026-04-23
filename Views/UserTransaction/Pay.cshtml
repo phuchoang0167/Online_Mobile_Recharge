@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
         <div>
             <h2 class="display-font mb-2">Pay Postpaid Bill</h2>
-            <p class="text-muted mb-0">Use a saved card, or enter another card manually to close this bill.</p>
+            <p class="text-muted mb-0">Pay by card (validated against your saved cards) or PayPal (sandbox).</p>
         </div>
         <a asp-controller="UserTransaction" asp-action="Index" class="btn btn-outline-secondary">Back</a>
     </div>
@@ -31,72 +31,82 @@
             <div class="table-card h-100">
                 <div asp-validation-summary="All" class="alert alert-danger"></div>
 
-                <div class="alert alert-light border mb-3">
-                    Your payment is validated against the cards you saved in the dashboard.
+                <div class="mb-3">
+                    <label asp-for="PaymentMethod" class="form-label">Payment method</label>
+                    <select asp-for="PaymentMethod" class="form-select" id="postpaidPaymentMethod">
+                        <option value="card">Card</option>
+                        <option value="paypal">PayPal (Sandbox)</option>
+                    </select>
                 </div>
 
-                @if (Model.SavedCards != null && Model.SavedCards.Any())
-                {
-                    <div class="table-card mb-3">
-                        <strong class="d-block mb-2">Card</strong>
-
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   name="CardInputMode"
-                                   id="billCardModeSaved"
-                                   value="saved"
-                                   @(string.Equals(Model.CardInputMode, "saved", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
-                            <label class="form-check-label" for="billCardModeSaved">Use saved card</label>
-                        </div>
-
-                        <div id="billSavedCardPicker" class="mt-2">
-                            <label asp-for="SavedCardId" class="form-label">Saved cards</label>
-                            <select asp-for="SavedCardId"
-                                    class="form-select"
-                                    asp-items='@(new SelectList(Model.SavedCards, "Id", "Label", Model.SavedCardId))'>
-                            </select>
-                            <span asp-validation-for="SavedCardId" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-check mt-3">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   name="CardInputMode"
-                                   id="billCardModeManual"
-                                   value="manual"
-                                   @(string.Equals(Model.CardInputMode, "manual", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
-                            <label class="form-check-label" for="billCardModeManual">Use another card</label>
-                        </div>
-
-                        <div class="small text-muted mt-2">
-                            Manual card must match one of your saved cards.
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <input asp-for="CardInputMode" type="hidden" value="manual" />
-                }
-
-                <div id="billManualCardFields">
-                    <div class="mb-3">
-                        <label asp-for="CardNumber" class="form-label">Card Number</label>
-                        <input asp-for="CardNumber" class="form-control" placeholder="16 digits" inputmode="numeric" />
-                        <span asp-validation-for="CardNumber" class="text-danger"></span>
+                <div id="postpaidCardSection">
+                    <div class="alert alert-light border mb-3">
+                        Your payment is validated against the cards you saved in the dashboard.
                     </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="Expiry" class="form-label">Expiry</label>
-                            <input asp-for="Expiry" class="form-control" placeholder="MM/YY" inputmode="numeric" />
-                            <span asp-validation-for="Expiry" class="text-danger"></span>
+                    @if (Model.SavedCards != null && Model.SavedCards.Any())
+                    {
+                        <div class="table-card mb-3">
+                            <strong class="d-block mb-2">Card</strong>
+
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="CardInputMode"
+                                       id="billCardModeSaved"
+                                       value="saved"
+                                       @(string.Equals(Model.CardInputMode, "saved", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                                <label class="form-check-label" for="billCardModeSaved">Use saved card</label>
+                            </div>
+
+                            <div id="billSavedCardPicker" class="mt-2">
+                                <label asp-for="SavedCardId" class="form-label">Saved cards</label>
+                                <select asp-for="SavedCardId"
+                                        class="form-select"
+                                        asp-items='@(new SelectList(Model.SavedCards, "Id", "Label", Model.SavedCardId))'>
+                                </select>
+                                <span asp-validation-for="SavedCardId" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="CardInputMode"
+                                       id="billCardModeManual"
+                                       value="manual"
+                                       @(string.Equals(Model.CardInputMode, "manual", StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                                <label class="form-check-label" for="billCardModeManual">Use another card</label>
+                            </div>
+
+                            <div class="small text-muted mt-2">
+                                Manual card must match one of your saved cards.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input asp-for="CardInputMode" type="hidden" value="manual" />
+                    }
+
+                    <div id="billManualCardFields">
+                        <div class="mb-3">
+                            <label asp-for="CardNumber" class="form-label">Card Number</label>
+                            <input asp-for="CardNumber" class="form-control" placeholder="16 digits" inputmode="numeric" />
+                            <span asp-validation-for="CardNumber" class="text-danger"></span>
                         </div>
 
-                        <div class="col-md-6">
-                            <label asp-for="CVV" class="form-label">CVV</label>
-                            <input asp-for="CVV" class="form-control" placeholder="3 digits" inputmode="numeric" />
-                            <span asp-validation-for="CVV" class="text-danger"></span>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Expiry" class="form-label">Expiry</label>
+                                <input asp-for="Expiry" class="form-control" placeholder="MM/YY" inputmode="numeric" />
+                                <span asp-validation-for="Expiry" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="CVV" class="form-label">CVV</label>
+                                <input asp-for="CVV" class="form-control" placeholder="3 digits" inputmode="numeric" />
+                                <span asp-validation-for="CVV" class="text-danger"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -117,6 +127,8 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("postpaidPayForm");
+            const paymentMethod = document.getElementById("postpaidPaymentMethod");
+            const cardSection = document.getElementById("postpaidCardSection");
             const cardModeSaved = document.getElementById("billCardModeSaved");
             const cardModeManual = document.getElementById("billCardModeManual");
             const savedCardPicker = document.getElementById("billSavedCardPicker");
@@ -128,6 +140,28 @@
 
             if (!form) {
                 return;
+            }
+
+            function togglePaymentMethod() {
+                const isCard = !paymentMethod || paymentMethod.value === "card";
+                if (cardSection) {
+                    cardSection.classList.toggle("d-none", !isCard);
+                }
+
+                if (savedCardSelect) {
+                    savedCardSelect.disabled = !isCard;
+                }
+
+                [cardNumberInput, expiryInput, cvvInput].forEach(function (input) {
+                    if (input) {
+                        input.disabled = !isCard;
+                    }
+                });
+
+                if (cardModeSaved && cardModeManual) {
+                    cardModeSaved.disabled = !isCard;
+                    cardModeManual.disabled = !isCard;
+                }
             }
 
             function toggleCardMode() {
@@ -159,6 +193,13 @@
                 cardModeManual.addEventListener("change", toggleCardMode);
             }
 
+            if (paymentMethod) {
+                paymentMethod.addEventListener("change", function () {
+                    togglePaymentMethod();
+                    toggleCardMode();
+                });
+            }
+
             form.addEventListener("submit", function (event) {
                 const message = "Are you sure you want to pay this postpaid bill of " +
                     "@Model.Amount.ToString("N0") VND for @Model.PhoneNumber?";
@@ -186,6 +227,7 @@
                 });
             });
 
+            togglePaymentMethod();
             toggleCardMode();
         });
     </script>

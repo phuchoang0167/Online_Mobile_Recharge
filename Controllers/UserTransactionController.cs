@@ -95,6 +95,54 @@ public class UserTransactionController : Controller
             ? model.TransactionId
             : id.GetValueOrDefault();
 
+        model.PaymentMethod = (model.PaymentMethod ?? string.Empty).Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(model.PaymentMethod))
+        {
+            model.PaymentMethod = "card";
+        }
+
+        if (model.PaymentMethod is not ("card" or "paypal"))
+        {
+            ModelState.AddModelError(nameof(model.PaymentMethod), "Invalid payment method.");
+        }
+
+        if (model.PaymentMethod == "paypal")
+        {
+            ModelState.Remove(nameof(model.CardInputMode));
+            ModelState.Remove(nameof(model.SavedCardId));
+            ModelState.Remove(nameof(model.CardNumber));
+            ModelState.Remove(nameof(model.CVV));
+            ModelState.Remove(nameof(model.Expiry));
+
+            if (!ModelState.IsValid)
+            {
+                if (inline)
+                {
+                    TempData["ErrorMessage"] = "Please check the payment form and try again.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                PopulateTransactionDetails(model, userId);
+                return View(model);
+            }
+
+            var beginResult = _service.BeginPayPalForPostpaid(model.TransactionId, userId);
+            if (!beginResult.IsSuccess || beginResult.Transaction == null)
+            {
+                if (inline)
+                {
+                    TempData["ErrorMessage"] = beginResult.ErrorMessage ?? "We could not start PayPal checkout for this bill.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ModelState.AddModelError(string.Empty, beginResult.ErrorMessage ?? "We could not start PayPal checkout for this bill.");
+                PopulateTransactionDetails(model, userId);
+                return View(model);
+            }
+
+            return RedirectToAction("PayPal", "Payment", new { id = beginResult.Transaction.Id });
+        }
+
         string? cardNumber = model.CardNumber;
         string? cvv = model.CVV;
         string? expiry = model.Expiry;
@@ -232,6 +280,7 @@ public class UserTransactionController : Controller
             Amount = transaction.Amount,
             DueDate = transaction.DueDate,
             ProductName = transaction.Product?.Name ?? "Postpaid bill",
+            PaymentMethod = "card",
             CardInputMode = savedCards.Any() ? "saved" : "manual",
             SavedCards = savedCards,
             SavedCardId = savedCards.FirstOrDefault()?.Id

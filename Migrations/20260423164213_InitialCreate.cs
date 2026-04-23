@@ -6,11 +6,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Online_Mobile_Recharge.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AdminAuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AdminUserId = table.Column<int>(type: "int", nullable: false),
+                    EntityType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    EntityId = table.Column<int>(type: "int", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Summary = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
+                    OldDataJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NewDataJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminAuditLogs", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "CallerTunes",
                 columns: table => new
@@ -102,6 +122,9 @@ namespace Online_Mobile_Recharge.Migrations
                     PasswordResetTokenHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
                     PasswordResetTokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    LastLockReason = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    LastLockNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    LastLockedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -244,6 +267,8 @@ namespace Online_Mobile_Recharge.Migrations
                     PostpaidBillingAddress = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     PostpaidAgreedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PostpaidContractAgreedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PaymentExternalId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PaymentExternalPayerId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     ProductId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -414,6 +439,9 @@ namespace Online_Mobile_Recharge.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AdminAuditLogs");
+
             migrationBuilder.DropTable(
                 name: "CallerTuneSubscriptions");
 

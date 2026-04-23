@@ -3,6 +3,9 @@
 @{
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
     ViewData["Title"] = "Feedback Management";
+    var q = (ViewBag.Query as string) ?? string.Empty;
+    var category = (ViewBag.Category as string) ?? string.Empty;
+    var replied = (ViewBag.Replied as string) ?? string.Empty;
 }
 
 <div class="content-panel">
@@ -25,6 +28,29 @@
     {
         <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
     }
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label mb-1">Search</label>
+            <input name="q" value="@q" class="form-control" placeholder="Message / user / product / email / reply" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label mb-1">Category</label>
+            <input name="category" value="@category" class="form-control" placeholder="Support / ProductReview" />
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label mb-1">Replied</label>
+            <select name="replied" class="form-select">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(replied))">All</option>
+                <option value="yes" selected="@(string.Equals(replied, "yes", StringComparison.OrdinalIgnoreCase))">Yes</option>
+                <option value="no" selected="@(string.Equals(replied, "no", StringComparison.OrdinalIgnoreCase))">No</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-brand w-100">Filter</button>
+            <a asp-action="Feedbacks" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
 
     @if (!Model.Any())
     {

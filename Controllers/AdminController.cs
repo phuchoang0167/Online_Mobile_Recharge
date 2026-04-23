@@ -350,29 +350,57 @@ public class AdminController : Controller
         };
     }
 
-    public IActionResult Users()
+    public IActionResult Users(string? q = null, string? status = null)
     {
-        return View(_context.Users
-            .Where(u => !u.IsDeleted)
+        var query = _context.Users
+            .AsNoTracking()
+            .Where(u => !u.IsDeleted);
+
+        var normalizedStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
+        if (normalizedStatus == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (normalizedStatus == "locked")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var keyword = q.Trim();
+            query = query.Where(x =>
+                x.Name.Contains(keyword) ||
+                x.Email.Contains(keyword) ||
+                x.PhoneNumber.Contains(keyword) ||
+                x.Role.Contains(keyword));
+        }
+
+        ViewBag.Query = q;
+        ViewBag.Status = status;
+
+        return View(query
+            .OrderByDescending(x => x.Role == "Admin")
+            .ThenByDescending(x => x.IsActive)
+            .ThenBy(x => x.Id)
             .ToList());
     }
 
-    public IActionResult AuditLogs(string? q = null, string? entityType = null, string? action = null)
+    public IActionResult AuditLogs(int? id = null, string? q = null, string? entityType = null)
     {
         var query = _context.AdminAuditLogs
             .AsNoTracking()
             .AsQueryable();
 
+        if (id != null && id > 0)
+        {
+            query = query.Where(x => x.Id == id.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(entityType))
         {
             var normalized = entityType.Trim();
             query = query.Where(x => x.EntityType == normalized);
-        }
-
-        if (!string.IsNullOrWhiteSpace(action))
-        {
-            var normalized = action.Trim();
-            query = query.Where(x => x.Action == normalized);
         }
 
         if (!string.IsNullOrWhiteSpace(q))
@@ -381,7 +409,9 @@ public class AdminController : Controller
             query = query.Where(x =>
                 x.Summary.Contains(keyword) ||
                 x.EntityType.Contains(keyword) ||
-                x.Action.Contains(keyword));
+                x.Action.Contains(keyword) ||
+                (x.OldDataJson != null && x.OldDataJson.Contains(keyword)) ||
+                (x.NewDataJson != null && x.NewDataJson.Contains(keyword)));
         }
 
         var logs = query
@@ -392,21 +422,41 @@ public class AdminController : Controller
 
         ViewBag.Query = q;
         ViewBag.EntityType = entityType;
-        ViewBag.Action = action;
+        ViewBag.AuditId = id;
 
         return View(logs);
     }
 
-    public IActionResult Products()
+    public IActionResult Products(string? q = null, string? type = null)
     {
         var now = DateTime.Now;
-        var products = _context.Products
+        var query = _context.Products
             .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(type) &&
+            Enum.TryParse<ProductType>(type.Trim(), ignoreCase: true, out var parsedType))
+        {
+            query = query.Where(x => x.Type == parsedType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var keyword = q.Trim();
+            query = query.Where(x =>
+                x.Name.Contains(keyword) ||
+                (x.Description != null && x.Description.Contains(keyword)));
+        }
+
+        var products = query
             .OrderByDescending(x => x.IsTop)
             .ThenByDescending(x => x.IsSpecial)
             .ThenBy(x => x.Type)
             .ThenBy(x => x.Price)
             .ToList();
+
+        ViewBag.Query = q;
+        ViewBag.Type = type;
 
         var productIds = products.Select(x => x.Id).ToList();
         var activeSales = _context.ProductSales
@@ -482,14 +532,15 @@ public class AdminController : Controller
 
             _context.Products.Add(newProduct);
             await _context.SaveChangesAsync();
-            AddAuditLog(
+            var auditLog = await AddAuditLogAsync(
                 entityType: "Product",
                 entityId: newProduct.Id,
                 action: "Create",
-                summary: $"Created new product version (from product #{product.Id}).",
+                summary: $"Created new product version #{newProduct.Id} from product #{product.Id} ({product.Name} -> {newProduct.Name}).",
                 oldData: new { product.Id, product.Name, product.Price, product.Type, product.ValidDays, product.IsTop, product.IsSpecial },
                 newData: new { newProduct.Id, newProduct.Name, newProduct.Price, newProduct.Type, newProduct.ValidDays, newProduct.IsTop, newProduct.IsSpecial });
-            await _context.SaveChangesAsync();
+            TempData["LastAuditLogId"] = auditLog.Id;
+            TempData["LastAuditLogSummary"] = auditLog.Summary;
 
             TempData["SuccessMessage"] = "This product is currently in use. A new product version was created so existing users can keep their current package until expiry.";
             return RedirectToAction(nameof(Products));
@@ -516,14 +567,15 @@ public class AdminController : Controller
         product.IsSpecial = model.IsSpecial;
 
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        var updatedAuditLog = await AddAuditLogAsync(
             entityType: "Product",
             entityId: product.Id,
             action: "Update",
-            summary: $"Updated product #{product.Id}.",
+            summary: $"Updated product #{product.Id} ({oldProduct.Name} -> {product.Name}).",
             oldData: oldProduct,
             newData: new { product.Id, product.Name, product.Description, product.Price, product.Type, product.ValidDays, product.IsTop, product.IsSpecial });
-        await _context.SaveChangesAsync();
+        TempData["LastAuditLogId"] = updatedAuditLog.Id;
+        TempData["LastAuditLogSummary"] = updatedAuditLog.Summary;
 
         TempData["SuccessMessage"] = "Product updated successfully.";
         return RedirectToAction(nameof(Products));
@@ -632,14 +684,13 @@ public class AdminController : Controller
 
         _context.ProductSales.Add(model);
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        await AddAuditLogAsync(
             entityType: "ProductSale",
             entityId: model.Id,
             action: "Create",
             summary: $"Created sale for product #{model.ProductId}.",
             oldData: null,
             newData: new { model.Id, model.ProductId, model.SaleType, model.SaleValue, model.StartAt, model.EndAt });
-        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Sale created successfully.";
         return RedirectToAction(nameof(Sales), new { filter = "active" });
@@ -694,14 +745,13 @@ public class AdminController : Controller
         sale.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        await AddAuditLogAsync(
             entityType: "ProductSale",
             entityId: sale.Id,
             action: "Update",
             summary: $"Updated sale #{sale.Id} (product #{sale.ProductId}).",
             oldData: oldSale,
             newData: new { sale.Id, sale.ProductId, sale.SaleType, sale.SaleValue, sale.StartAt, sale.EndAt });
-        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Sale updated successfully.";
         return RedirectToAction(nameof(Sales), new { filter = "active" });
@@ -720,14 +770,13 @@ public class AdminController : Controller
         var oldSale = new { sale.Id, sale.ProductId, sale.SaleType, sale.SaleValue, sale.StartAt, sale.EndAt };
         _context.ProductSales.Remove(sale);
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        await AddAuditLogAsync(
             entityType: "ProductSale",
             entityId: id,
             action: "Delete",
             summary: $"Deleted sale #{id} (product #{sale.ProductId}).",
             oldData: oldSale,
             newData: null);
-        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Sale deleted successfully.";
         return RedirectToAction(nameof(Sales), new { filter = "active" });
@@ -819,23 +868,24 @@ public class AdminController : Controller
         }
 
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        var editUserAuditLog = await AddAuditLogAsync(
             entityType: "User",
             entityId: user.Id,
             action: "Update",
             summary: $"Updated user #{user.Id}.",
             oldData: oldUser,
             newData: new { user.Id, user.Name, user.Email, user.PhoneNumber, user.IsActive, user.IsDeleted });
-        await _context.SaveChangesAsync();
+        TempData["LastAuditLogId"] = editUserAuditLog.Id;
+        TempData["LastAuditLogSummary"] = editUserAuditLog.Summary;
 
         return RedirectToAction(nameof(Users));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ToggleUser(int id, string? lockReason, string? lockNote)
+    public async Task<IActionResult> ToggleUser(int id, string? lockReason, string? lockNote)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Id == id);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
@@ -868,15 +918,16 @@ public class AdminController : Controller
 
         user.IsActive = !user.IsActive;
 
-        _context.SaveChanges();
-        AddAuditLog(
+        await _context.SaveChangesAsync();
+        var toggleAuditLog = await AddAuditLogAsync(
             entityType: "User",
             entityId: user.Id,
             action: "Update",
             summary: $"{(user.IsActive ? "Unlocked" : "Locked")} user #{user.Id}.",
             oldData: oldUser,
             newData: new { user.Id, user.IsActive, user.IsDeleted, user.LastLockReason, user.LastLockNote, user.LastLockedAt });
-        _context.SaveChanges();
+        TempData["LastAuditLogId"] = toggleAuditLog.Id;
+        TempData["LastAuditLogSummary"] = toggleAuditLog.Summary;
 
         return RedirectToAction(nameof(Users));
     }
@@ -893,12 +944,48 @@ public class AdminController : Controller
         return RedirectToAction("Index", "AdminTransaction");
     }
 
-    public IActionResult Feedbacks()
+    public IActionResult Feedbacks(string? q = null, string? category = null, string? replied = null)
     {
-        return View(_context.Feedbacks
+        var query = _context.Feedbacks
             .Include(x => x.User)
             .Include(x => x.Product)
             .Include(x => x.Transaction)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            var normalized = category.Trim();
+            query = query.Where(x => x.Category == normalized);
+        }
+
+        var normalizedReplied = (replied ?? string.Empty).Trim().ToLowerInvariant();
+        if (normalizedReplied == "yes")
+        {
+            query = query.Where(x => x.AdminReply != null && x.AdminReply != "");
+        }
+        else if (normalizedReplied == "no")
+        {
+            query = query.Where(x => x.AdminReply == null || x.AdminReply == "");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var keyword = q.Trim();
+            query = query.Where(x =>
+                x.Message.Contains(keyword) ||
+                (x.AdminReply != null && x.AdminReply.Contains(keyword)) ||
+                x.Category.Contains(keyword) ||
+                (x.Product != null && x.Product.Name.Contains(keyword)) ||
+                (x.User != null && (x.User.Name.Contains(keyword) || x.User.Email.Contains(keyword))) ||
+                x.Email.Contains(keyword) ||
+                x.Name.Contains(keyword));
+        }
+
+        ViewBag.Query = q;
+        ViewBag.Category = category;
+        ViewBag.Replied = replied;
+
+        return View(query
             .OrderByDescending(x => x.CreatedAt)
             .ToList());
     }
@@ -927,14 +1014,15 @@ public class AdminController : Controller
         feedback.AdminReply = trimmedReply;
         feedback.AdminRepliedAt = DateTime.Now;
         await _context.SaveChangesAsync();
-        AddAuditLog(
+        var replyAuditLog = await AddAuditLogAsync(
             entityType: "Feedback",
             entityId: feedback.Id,
             action: hadExistingReply ? "Update" : "Create",
             summary: hadExistingReply ? $"Updated feedback reply #{feedback.Id}." : $"Replied to feedback #{feedback.Id}.",
             oldData: oldFeedback,
             newData: new { feedback.Id, feedback.AdminReply, feedback.AdminRepliedAt });
-        await _context.SaveChangesAsync();
+        TempData["LastAuditLogId"] = replyAuditLog.Id;
+        TempData["LastAuditLogSummary"] = replyAuditLog.Summary;
 
         TempData["SuccessMessage"] = hadExistingReply
             ? "Reply updated successfully."
@@ -942,7 +1030,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Feedbacks));
     }
 
-    private void AddAuditLog(string entityType, int entityId, string action, string summary, object? oldData, object? newData)
+    private async Task<AdminAuditLog> AddAuditLogAsync(string entityType, int entityId, string action, string summary, object? oldData, object? newData, CancellationToken cancellationToken = default)
     {
         var adminUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
         var trimmedSummary = (summary ?? string.Empty).Trim();
@@ -951,7 +1039,7 @@ public class AdminController : Controller
             trimmedSummary = trimmedSummary[..400];
         }
 
-        _context.AdminAuditLogs.Add(new AdminAuditLog
+        var log = new AdminAuditLog
         {
             AdminUserId = adminUserId,
             EntityType = (entityType ?? string.Empty).Trim(),
@@ -961,7 +1049,11 @@ public class AdminController : Controller
             OldDataJson = oldData == null ? null : JsonSerializer.Serialize(oldData, AuditJsonOptions),
             NewDataJson = newData == null ? null : JsonSerializer.Serialize(newData, AuditJsonOptions),
             CreatedAt = DateTime.Now
-        });
+        };
+
+        _context.AdminAuditLogs.Add(log);
+        await _context.SaveChangesAsync(cancellationToken);
+        return log;
     }
 
     private object BuildWeeklyTrends(DateTime from, DateTime to)

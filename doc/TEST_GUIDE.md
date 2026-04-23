@@ -37,11 +37,17 @@
   - use `Postpaid` to create a pending bill
 - Confirm the action in the on-screen modal
 
+### PayPal Sandbox (Optional)
+- Ensure `PayPal:ClientId` and `PayPal:Secret` are configured with **Sandbox REST API credentials** (see PayPal Developer → My Apps & Credentials → Sandbox).
+- When redirected to PayPal Sandbox to approve payment, sign in with a *Sandbox Personal account* (buyer).
+- Buyer email example is listed in `doc/DEMO_DATA.md` (password is available in PayPal Developer Dashboard).
+
 ## Postpaid Bill Flow
 - Open `/User/Transaction`
 - Find a pending postpaid bill
 - Click `Pay Now`
-- Choose a saved card (or enter card number, expiry, and CVV manually)
+- Choose Card or PayPal Sandbox
+- If you choose Card, select a saved card (or enter card number, expiry, and CVV manually)
 - Confirm payment in the modal
 - Check that the transaction becomes `Paid`
 - Open `Bill PDF` or `Print / Save Bill as PDF` to export the receipt
@@ -71,6 +77,7 @@
 - Open `/Admin/Users`
 - Open `/Admin/Transaction`
 - Open `/Admin/Feedbacks`
+- Open `/Admin/AuditLogs` (review recent admin changes)
 
 ## Fast Checks
 - Notification bell:

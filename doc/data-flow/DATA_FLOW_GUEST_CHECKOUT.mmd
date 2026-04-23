@@ -1,0 +1,27 @@
+flowchart TD
+    %% See doc/data-flow/FLOWCHART_SYMBOLS.md for symbol meanings
+
+    G[Guest]
+    PV((Product List + Detail))
+    GCV((Guest Checkout View))
+    GSV((Guest Success Page))
+    PP((PayPal Approval))
+
+    PC((ProductController))
+    GCC((GuestCheckoutController))
+    GPC((GuestPaymentController))
+    TS((TransactionService))
+
+    DB[(Products / Transactions / Cards / Users)]
+
+    G --> PV --> PC --> DB
+    DB --> PC --> PV
+
+    %% Guest card flow
+    G --> GCV --> GCC --> TS --> DB
+    DB --> TS --> GCC --> GSV
+
+    %% Guest PayPal flow
+    GCC --> GPC --> PP --> GPC --> TS --> DB
+    DB --> TS --> GPC --> GSV
+

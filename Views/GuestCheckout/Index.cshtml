@@ -38,10 +38,10 @@
 
         <div class="col-lg-7">
             <div class="content-panel">
-                <h3 class="display-font mb-3">Pay with card</h3>
-                <p class="text-muted mb-4">Guest checkout only supports prepaid topup using manual card entry.</p>
+                <h3 class="display-font mb-3">Payment</h3>
+                <p class="text-muted mb-4">Choose card entry or PayPal (sandbox) to complete your prepaid topup.</p>
 
-                <form asp-action="Pay" method="post" class="d-grid gap-3">
+                <form asp-action="Pay" method="post" class="d-grid gap-3" id="guestCheckoutForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="productId" value="@product.Id" />
 
@@ -50,7 +50,15 @@
                         <input class="form-control" id="phone" name="phone" value="@phone" inputmode="numeric" autocomplete="tel" placeholder="0xxxxxxxxx" required />
                     </div>
 
-                    <div class="row g-2">
+                    <div>
+                        <label class="form-label" for="paymentMethod">Payment method</label>
+                        <select class="form-select" id="paymentMethod" name="paymentMethod">
+                            <option value="card">Card</option>
+                            <option value="paypal">PayPal (Sandbox)</option>
+                        </select>
+                    </div>
+
+                    <div id="guestCardFields" class="row g-2">
                         <div class="col-12">
                             <label class="form-label" for="cardNumber">Card number</label>
                             <input class="form-control" id="cardNumber" name="cardNumber" inputmode="numeric" placeholder="16 digits" />
@@ -71,3 +79,34 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const methodSelect = document.getElementById("paymentMethod");
+            const cardFields = document.getElementById("guestCardFields");
+            const cardNumber = document.getElementById("cardNumber");
+            const expiry = document.getElementById("expiry");
+            const cvv = document.getElementById("cvv");
+
+            function toggleFields() {
+                const isCard = !methodSelect || methodSelect.value === "card";
+                if (cardFields) {
+                    cardFields.classList.toggle("d-none", !isCard);
+                }
+
+                [cardNumber, expiry, cvv].forEach(function (input) {
+                    if (input) {
+                        input.disabled = !isCard;
+                    }
+                });
+            }
+
+            if (methodSelect) {
+                methodSelect.addEventListener("change", toggleFields);
+            }
+
+            toggleFields();
+        });
+    </script>
+}

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Mobile_Recharge.Models.Entities;
+using Online_Mobile_Recharge.Services;
 
 [Route("Admin/CallerTune")]
 [AdminAuthorize]
@@ -9,11 +10,13 @@ public class AdminCallerTuneController : Controller
     private const long MaxFileSizeBytes = 5 * 1024 * 1024;
     private readonly MobileRechargeDbContext _context;
     private readonly IWebHostEnvironment _env;
+    private readonly AdminAuditService _audit;
 
-    public AdminCallerTuneController(MobileRechargeDbContext context, IWebHostEnvironment env)
+    public AdminCallerTuneController(MobileRechargeDbContext context, IWebHostEnvironment env, AdminAuditService audit)
     {
         _context = context;
         _env = env;
+        _audit = audit;
     }
 
     [HttpGet("")]
@@ -85,6 +88,22 @@ public class AdminCallerTuneController : Controller
         _context.CallerTunes.Add(tune);
         _context.SaveChanges();
 
+        _audit.LogAsync(
+            adminUserId: adminId,
+            action: "Create",
+            summary: $"Uploaded caller tune #{tune.Id}.",
+            oldData: (CallerTune?)null,
+            newData: new CallerTune
+            {
+                Id = tune.Id,
+                CreatedByAdminId = tune.CreatedByAdminId,
+                Title = tune.Title,
+                FilePath = tune.FilePath,
+                IsActive = tune.IsActive,
+                CreatedAt = tune.CreatedAt
+            },
+            entityId: tune.Id).GetAwaiter().GetResult();
+
         TempData["Success"] = "New caller tune added to catalog.";
         return RedirectToAction(nameof(Index));
     }
@@ -99,8 +118,34 @@ public class AdminCallerTuneController : Controller
             return NotFound();
         }
 
+        var oldData = new CallerTune
+        {
+            Id = tune.Id,
+            CreatedByAdminId = tune.CreatedByAdminId,
+            Title = tune.Title,
+            FilePath = tune.FilePath,
+            IsActive = tune.IsActive,
+            CreatedAt = tune.CreatedAt
+        };
+
         tune.IsActive = !tune.IsActive;
         _context.SaveChanges();
+
+        _audit.LogAsync(
+            adminUserId: HttpContext.Session.GetInt32("UserId") ?? 0,
+            action: "Update",
+            summary: $"{(tune.IsActive ? "Enabled" : "Disabled")} caller tune #{tune.Id}.",
+            oldData: oldData,
+            newData: new CallerTune
+            {
+                Id = tune.Id,
+                CreatedByAdminId = tune.CreatedByAdminId,
+                Title = tune.Title,
+                FilePath = tune.FilePath,
+                IsActive = tune.IsActive,
+                CreatedAt = tune.CreatedAt
+            },
+            entityId: tune.Id).GetAwaiter().GetResult();
 
         TempData["Success"] = tune.IsActive
             ? "Caller tune is now available for users."
@@ -119,6 +164,16 @@ public class AdminCallerTuneController : Controller
             return NotFound();
         }
 
+        var oldData = new CallerTune
+        {
+            Id = tune.Id,
+            CreatedByAdminId = tune.CreatedByAdminId,
+            Title = tune.Title,
+            FilePath = tune.FilePath,
+            IsActive = tune.IsActive,
+            CreatedAt = tune.CreatedAt
+        };
+
         var relativePath = (tune.FilePath ?? string.Empty).TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
         var absolutePath = Path.GetFullPath(Path.Combine(_env.WebRootPath, relativePath));
         var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads"));
@@ -131,8 +186,15 @@ public class AdminCallerTuneController : Controller
         _context.CallerTunes.Remove(tune);
         _context.SaveChanges();
 
+        _audit.LogAsync(
+            adminUserId: HttpContext.Session.GetInt32("UserId") ?? 0,
+            action: "Delete",
+            summary: $"Deleted caller tune #{oldData.Id}.",
+            oldData: oldData,
+            newData: (CallerTune?)null,
+            entityId: oldData.Id).GetAwaiter().GetResult();
+
         TempData["Success"] = "Caller tune removed from catalog.";
         return RedirectToAction(nameof(Index));
     }
 }
-

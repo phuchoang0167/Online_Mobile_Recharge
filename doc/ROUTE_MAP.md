@@ -38,6 +38,7 @@
 - `/Admin/Users`
 - `/Admin/Transaction`
 - `/Admin/Feedbacks`
+- `/Admin/AuditLogs`
 
 ## Notes
 - Some actions are `POST` only and are triggered by forms or buttons.

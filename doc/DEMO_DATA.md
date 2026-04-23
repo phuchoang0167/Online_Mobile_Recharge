@@ -17,7 +17,7 @@ All seeded accounts use password: `123`
 
 ## Demo Cards (Manual Add List)
 
-You can add these cards at `/User/Cards`. They are also valid to use in checkout/payment when they exist in your saved wallet.
+These cards are seeded into the database on first run. You can also add them manually at `/User/Cards`.
 
 Expiry input format is `MM/YY`.
 
@@ -33,5 +33,12 @@ Expiry input format is `MM/YY`.
 
 - Seeded users may already have demo cards in `/User/Cards`.
 - Payments deduct balance from the selected saved card (demo only).
-- Guest topup (`/GuestCheckout`) also validates against the same card records (manual entry).
-- Postpaid checkout requires National ID / CCCD + billing address + agree to terms (stored on the postpaid transaction and also saved to user profile).
+- Guest topup (`/GuestCheckout`) validates against the same card records (manual entry) and also supports PayPal Sandbox.
+- Postpaid checkout creates a pending bill, then you can settle it later from `/User/Transaction` using Card or PayPal Sandbox.
+
+## PayPal Sandbox (Test Buyer)
+
+For PayPal Sandbox testing, use a *Sandbox Personal account* (buyer) created in the PayPal Developer Dashboard.
+
+- Buyer email: `sb-fatcq50787209@personal.example.com`
+- Password: get it from PayPal Developer → Dashboard → Sandbox → Accounts → select the account → View details.

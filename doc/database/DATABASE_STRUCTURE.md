@@ -8,6 +8,7 @@
 - `Transactions`
 - `Feedbacks`
 - `Cards`
+- `AdminAuditLogs`
 - `DndSettings`
 - `DndNumbers`
 - `CallerTunes`
@@ -28,9 +29,10 @@
 
 ## Important Notes
 - `Users.Email` is unique.
-- `Users.NationalId` and `Users.BillingAddress` store the latest billing profile (editable by user/admin).
+- `Users.NationalId` and `Users.BillingAddress` store an optional billing profile (editable by user/admin).
 - `Transactions.ProductId` is optional.
-- Postpaid fields are stored per transaction:
+- `AdminAuditLogs` stores admin change history (entity type/id, action, summary, old/new json).
+- Optional postpaid fields are stored per transaction:
   - `Transactions.PostpaidNationalId`
   - `Transactions.PostpaidBillingAddress`
   - `Transactions.PostpaidAgreedAt`

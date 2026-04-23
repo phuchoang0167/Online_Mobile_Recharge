@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Online_Mobile_Recharge.Models.Configuration;
 
@@ -10,11 +11,13 @@ public class PayPalService
 {
     private readonly HttpClient _httpClient;
     private readonly PayPalOptions _options;
+    private readonly ILogger<PayPalService> _logger;
 
-    public PayPalService(HttpClient httpClient, IOptions<PayPalOptions> options)
+    public PayPalService(HttpClient httpClient, IOptions<PayPalOptions> options, ILogger<PayPalService> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        _logger = logger;
     }
 
     private string BaseUrl =>
@@ -24,14 +27,33 @@ public class PayPalService
 
     public async Task<string?> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.Secret))
+        {
+            _logger.LogWarning("PayPal options missing ClientId/Secret. Environment={Environment}", _options.Environment);
+            return null;
+        }
+
+        if (string.Equals(_options.ClientId.Trim(), _options.Secret.Trim(), StringComparison.Ordinal))
+        {
+            _logger.LogWarning("PayPal options invalid: Secret equals ClientId. Environment={Environment}", _options.Environment);
+            return null;
+        }
+
         var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v1/oauth2/token");
         var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.Secret}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StringContent("grant_type=client_credentials", Encoding.UTF8, "application/x-www-form-urlencoded");
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(
+                "PayPal token request failed. Status={StatusCode}. Environment={Environment}. Body={Body}",
+                (int)response.StatusCode,
+                _options.Environment,
+                body);
             return null;
         }
 
