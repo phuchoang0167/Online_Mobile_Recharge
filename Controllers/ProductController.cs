@@ -21,7 +21,7 @@ namespace Online_Mobile_Recharge.Controllers
 
         public IActionResult Index()
         {
-            ViewBag.SelectedPhoneNumber = string.Empty;
+            ViewBag.SelectedPhoneNumber = (HttpContext.Session.GetString(SelectedPhoneSessionKey) ?? string.Empty).Trim();
             ViewBag.IsLoggedIn = HttpContext.Session.GetInt32("UserId") != null;
 
             var now = DateTime.Now;

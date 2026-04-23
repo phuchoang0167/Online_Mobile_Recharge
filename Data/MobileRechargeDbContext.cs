@@ -195,6 +195,14 @@ public class MobileRechargeDbContext : DbContext
             .Property(u => u.BillingAddress)
             .HasMaxLength(500);
 
+        modelBuilder.Entity<User>()
+            .Property(u => u.LastLockReason)
+            .HasMaxLength(150);
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.LastLockNote)
+            .HasMaxLength(500);
+
         modelBuilder.Entity<Transaction>()
             .Property(t => t.PhoneNumber)
             .IsRequired();

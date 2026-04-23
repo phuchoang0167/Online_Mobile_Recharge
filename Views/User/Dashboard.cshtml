@@ -282,9 +282,35 @@ else if (dueSoonBillsCount > 0)
 
 </div>
 
+<div class="row g-4 mt-1">
+    <div class="col-12">
+        <div class="content-panel chart-card">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <div>
+                    <h4 class="display-font mb-1">Your spending chart</h4>
+                    <p class="text-muted mb-0">Successful transaction totals over time.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="soft-pill">Range</span>
+                    <select id="spendPeriod" class="form-select form-select-sm" style="width: 140px;">
+                        <option value="7days">Last 7 days</option>
+                        <option value="30days" selected>Last 30 days</option>
+                    </select>
+                </div>
+            </div>
+            <canvas id="spendChart" class="chart-canvas" aria-label="Spending chart"></canvas>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Chart === "undefined") {
+                return;
+            }
+
             function isClickIgnored(target) {
                 if (!target) {
                     return false;
@@ -328,6 +354,82 @@ else if (dueSoonBillsCount > 0)
                 event.preventDefault();
                 openCard(card);
             });
+
+            const spendCanvas = document.getElementById("spendChart");
+            const spendPeriod = document.getElementById("spendPeriod");
+            const moneyFormatter = new Intl.NumberFormat("vi-VN");
+            let spendChart = null;
+
+            async function loadSpend(period) {
+                const params = new URLSearchParams({ period: period || "30days" });
+                const response = await fetch(`/User/SpendingChartData?${params.toString()}`, {
+                    headers: { "Accept": "application/json" }
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to load spending chart data.");
+                }
+                return await response.json();
+            }
+
+            function renderSpendChart(data) {
+                if (!spendCanvas) {
+                    return;
+                }
+
+                if (spendChart) {
+                    spendChart.destroy();
+                }
+
+                spendChart = new Chart(spendCanvas, {
+                    type: "line",
+                    data: {
+                        labels: data.labels ?? [],
+                        datasets: [
+                            {
+                                label: "Spending (VND)",
+                                data: data.totals ?? [],
+                                borderColor: "#0f766e",
+                                backgroundColor: "rgba(15, 118, 110, 0.12)",
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return `${moneyFormatter.format(value)} VND`;
+                                    }
+                                },
+                                grid: { color: "rgba(15, 23, 42, 0.08)" }
+                            },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: { legend: { position: "bottom" } }
+                    }
+                });
+            }
+
+            async function refreshSpend() {
+                try {
+                    const data = await loadSpend(spendPeriod?.value ?? "30days");
+                    renderSpendChart(data);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            if (spendPeriod) {
+                spendPeriod.addEventListener("change", refreshSpend);
+            }
+
+            refreshSpend();
         });
     </script>
 }

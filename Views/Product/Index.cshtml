@@ -29,7 +29,7 @@
         @{
             var selectedPhone = (ViewBag.SelectedPhoneNumber as string) ?? string.Empty;
             var hasSelectedPhone = !string.IsNullOrWhiteSpace(selectedPhone);
-            var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+            var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}#phonePicker";
         }
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -47,7 +47,7 @@
                     data-bs-target="#phonePickerCollapse"
                     aria-expanded="false"
                     aria-controls="phonePickerCollapse">
-                @(hasSelectedPhone ? "Change phone" : "Select phone")
+                @(hasSelectedPhone ? "Select phone" : "Add phone")
             </button>
         </div>
 

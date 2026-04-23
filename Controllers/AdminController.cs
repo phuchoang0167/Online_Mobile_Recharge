@@ -76,6 +76,95 @@ public class AdminController : Controller
         }
     }
 
+    [HttpGet]
+    public IActionResult BestSellersData(string period = "week", DateTime? from = null, DateTime? to = null, int top = 8)
+    {
+        var normalizedPeriod = (period ?? string.Empty).Trim().ToLowerInvariant();
+        var now = DateTime.Now;
+
+        var normalizedTo = (to ?? now).Date;
+        var normalizedFrom = (from ?? normalizedTo.AddDays(-27)).Date;
+
+        if (normalizedFrom > normalizedTo)
+        {
+            return BadRequest("Invalid date range. 'from' must be <= 'to'.");
+        }
+
+        if (top <= 0 || top > 50)
+        {
+            top = 8;
+        }
+
+        DateTime start;
+        DateTime endExclusive;
+
+        switch (normalizedPeriod)
+        {
+            case "day":
+                start = normalizedFrom.Date;
+                endExclusive = normalizedTo.Date.AddDays(1);
+                break;
+            case "week":
+                start = GetWeekStart(normalizedFrom);
+                endExclusive = GetWeekStart(normalizedTo).AddDays(7);
+                break;
+            case "year":
+                start = new DateTime(normalizedFrom.Year, 1, 1);
+                endExclusive = new DateTime(normalizedTo.Year + 1, 1, 1);
+                break;
+            default:
+                return BadRequest("Invalid period. Use day, week, or year.");
+        }
+
+        var best = _context.Transactions
+            .AsNoTracking()
+            .Where(x =>
+                x.Status == TransactionStatus.Success &&
+                x.ProductId != null &&
+                x.CreatedAt >= start &&
+                x.CreatedAt < endExclusive)
+            .GroupBy(x => x.ProductId!.Value)
+            .Select(grouped => new
+            {
+                ProductId = grouped.Key,
+                SoldCount = grouped.Count(),
+                Revenue = grouped.Sum(x => x.Amount)
+            })
+            .OrderByDescending(x => x.SoldCount)
+            .ThenByDescending(x => x.Revenue)
+            .Take(top)
+            .ToList();
+
+        var productIds = best.Select(x => x.ProductId).ToList();
+        var products = _context.Products
+            .AsNoTracking()
+            .Where(x => productIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Name, x.Type })
+            .ToList()
+            .ToDictionary(x => x.Id, x => x);
+
+        var result = best.Select(item =>
+        {
+            products.TryGetValue(item.ProductId, out var product);
+            return new
+            {
+                productId = item.ProductId,
+                name = product?.Name ?? $"Product #{item.ProductId}",
+                type = product?.Type.ToString() ?? "Unknown",
+                soldCount = item.SoldCount,
+                revenue = item.Revenue
+            };
+        });
+
+        return Json(new
+        {
+            period = normalizedPeriod,
+            from = start,
+            to = endExclusive.AddDays(-1),
+            items = result
+        });
+    }
+
     public IActionResult Dashboard()
     {
         ViewBag.TotalUsers = _context.Users.Count(x => !x.IsDeleted && x.Role == "User");
@@ -744,7 +833,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ToggleUser(int id)
+    public IActionResult ToggleUser(int id, string? lockReason, string? lockNote)
     {
         var user = _context.Users.FirstOrDefault(u => u.Id == id);
 
@@ -759,6 +848,24 @@ public class AdminController : Controller
         }
 
         var oldUser = new { user.Id, user.IsActive, user.IsDeleted };
+        var isLocking = user.IsActive;
+
+        if (isLocking)
+        {
+            lockReason = (lockReason ?? string.Empty).Trim();
+            lockNote = (lockNote ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(lockReason))
+            {
+                TempData["ErrorMessage"] = "Lock reason is required.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            user.LastLockReason = lockReason;
+            user.LastLockNote = string.IsNullOrWhiteSpace(lockNote) ? null : lockNote;
+            user.LastLockedAt = DateTime.Now;
+        }
+
         user.IsActive = !user.IsActive;
 
         _context.SaveChanges();
@@ -768,7 +875,7 @@ public class AdminController : Controller
             action: "Update",
             summary: $"{(user.IsActive ? "Unlocked" : "Locked")} user #{user.Id}.",
             oldData: oldUser,
-            newData: new { user.Id, user.IsActive, user.IsDeleted });
+            newData: new { user.Id, user.IsActive, user.IsDeleted, user.LastLockReason, user.LastLockNote, user.LastLockedAt });
         _context.SaveChanges();
 
         return RedirectToAction(nameof(Users));

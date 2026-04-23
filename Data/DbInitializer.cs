@@ -15,7 +15,68 @@ public static class DbInitializer
         SeedCards(context);
         SeedTransactions(context);
         SeedFeedbacks(context);
+        SeedAdminAuditLogs(context);
         EnsureLegacyUsersRemainVerified(context);
+    }
+
+    private static void SeedAdminAuditLogs(MobileRechargeDbContext context)
+    {
+        if (context.AdminAuditLogs.Any())
+        {
+            return;
+        }
+
+        var adminId = context.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Admin" && !x.IsDeleted)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefault();
+
+        if (adminId == null)
+        {
+            return;
+        }
+
+        var now = DateTime.Now;
+        var sample = new List<AdminAuditLog>
+        {
+            new()
+            {
+                AdminUserId = adminId.Value,
+                EntityType = "Product",
+                EntityId = 1,
+                Action = "Update",
+                Summary = "Sample audit log: updated product flags.",
+                OldDataJson = null,
+                NewDataJson = "{\"IsTop\":true,\"IsSpecial\":false}",
+                CreatedAt = now.AddDays(-2)
+            },
+            new()
+            {
+                AdminUserId = adminId.Value,
+                EntityType = "Sale",
+                EntityId = 1,
+                Action = "Create",
+                Summary = "Sample audit log: created a sale campaign.",
+                OldDataJson = null,
+                NewDataJson = "{\"SaleType\":\"Percent\",\"SaleValue\":10}",
+                CreatedAt = now.AddDays(-1)
+            },
+            new()
+            {
+                AdminUserId = adminId.Value,
+                EntityType = "User",
+                EntityId = 2,
+                Action = "Update",
+                Summary = "Sample audit log: locked user with a reason.",
+                OldDataJson = null,
+                NewDataJson = "{\"IsActive\":false,\"LastLockReason\":\"Overdue postpaid\"}",
+                CreatedAt = now.AddHours(-8)
+            }
+        };
+
+        context.AdminAuditLogs.AddRange(sample);
+        context.SaveChanges();
     }
 
     private static void SeedSales(MobileRechargeDbContext context)

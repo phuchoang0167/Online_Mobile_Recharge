@@ -25,72 +25,76 @@
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 app-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th class="text-end">Price</th>
-                        <th>Flags</th>
-                        <th style="width: 140px;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+        @foreach (var group in Model.GroupBy(x => x.Type).OrderBy(x => x.Key.ToString()))
+        {
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mt-4 mb-2">
+                <h5 class="mb-0">@group.Key packs</h5>
+                <span class="soft-pill">@group.Count() items</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 app-table">
+                    <thead>
                         <tr>
-                            <td style="min-width: 260px;">
-                                <strong>@item.Name</strong>
-                                @if (!string.IsNullOrWhiteSpace(item.Description))
-                                {
-                                    <div class="small text-muted">@item.Description</div>
-                                }
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark">@item.Type</span>
-                            </td>
-                            <td class="text-end">
-                                @{ pricingByProductId.TryGetValue(item.Id, out var pricing); }
-                                @if (pricing?.HasSale == true)
-                                {
-                                    <div class="d-flex flex-column align-items-end">
-                                        <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
-                                        <span class="fw-bold text-danger">@pricing.EffectivePrice.ToString("N0") VND</span>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span>@item.Price.ToString("N0") VND</span>
-                                }
-                            </td>
-                            <td>
-                                @if (pricing?.HasSale == true)
-                                {
-                                    <span class="badge bg-danger">Sale @pricing.SaleBadgeText</span>
-                                }
-                                @if (item.IsTop)
-                                {
-                                    <span class="badge bg-primary">Top</span>
-                                }
-                                @if (item.IsSpecial)
-                                {
-                                    <span class="badge bg-warning text-dark">Special</span>
-                                }
-                                @if (!item.IsTop && !item.IsSpecial)
-                                {
-                                    <span class="text-muted">-</span>
-                                }
-                            </td>
-                            <td class="text-end">
-                                <a asp-action="EditProduct" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
-                                    Edit
-                                </a>
-                            </td>
+                            <th>Name</th>
+                            <th class="text-end">Price</th>
+                            <th>Flags</th>
+                            <th style="width: 140px;"></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in group)
+                        {
+                            <tr>
+                                <td style="min-width: 260px;">
+                                    <strong>@item.Name</strong>
+                                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                                    {
+                                        <div class="small text-muted">@item.Description</div>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @{ pricingByProductId.TryGetValue(item.Id, out var pricing); }
+                                    @if (pricing?.HasSale == true)
+                                    {
+                                        <div class="d-flex flex-column align-items-end">
+                                            <span class="text-muted text-decoration-line-through small">@pricing.OriginalPrice.ToString("N0") VND</span>
+                                            <span class="fw-bold text-danger">@pricing.EffectivePrice.ToString("N0") VND</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span>@item.Price.ToString("N0") VND</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (pricing?.HasSale == true)
+                                    {
+                                        <span class="badge bg-danger">Sale @pricing.SaleBadgeText</span>
+                                    }
+                                    @if (item.IsTop)
+                                    {
+                                        <span class="badge bg-primary">Top</span>
+                                    }
+                                    @if (item.IsSpecial)
+                                    {
+                                        <span class="badge bg-warning text-dark">Special</span>
+                                    }
+                                    @if (!item.IsTop && !item.IsSpecial)
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="EditProduct" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     }
 </div>

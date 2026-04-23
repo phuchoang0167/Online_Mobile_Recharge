@@ -114,6 +114,67 @@ public class UserController : Controller
         return View();
     }
 
+    [HttpGet]
+    public IActionResult SpendingChartData(string period = "30days")
+    {
+        var userId = HttpContext.Session.GetInt32("UserId")!.Value;
+        var now = DateTime.Now;
+        var today = now.Date;
+
+        DateTime start;
+        int buckets;
+        Func<int, DateTime> bucketStart;
+        Func<DateTime, int> bucketIndex;
+        string[] labels;
+
+        switch ((period ?? string.Empty).Trim().ToLowerInvariant())
+        {
+            case "7days":
+                start = today.AddDays(-6);
+                buckets = 7;
+                bucketStart = i => start.AddDays(i);
+                bucketIndex = createdAt => (int)(createdAt.Date - start).TotalDays;
+                labels = Enumerable.Range(0, buckets).Select(i => bucketStart(i).ToString("dd/MM")).ToArray();
+                break;
+            case "30days":
+            default:
+                start = today.AddDays(-29);
+                buckets = 30;
+                bucketStart = i => start.AddDays(i);
+                bucketIndex = createdAt => (int)(createdAt.Date - start).TotalDays;
+                labels = Enumerable.Range(0, buckets).Select(i => bucketStart(i).ToString("dd/MM")).ToArray();
+                break;
+        }
+
+        var totals = new decimal[buckets];
+
+        var transactions = _context.Transactions
+            .AsNoTracking()
+            .Where(x =>
+                x.UserId == userId &&
+                x.Status == TransactionStatus.Success &&
+                x.CreatedAt >= start &&
+                x.CreatedAt < today.AddDays(1))
+            .Select(x => new { x.CreatedAt, x.Amount })
+            .ToList();
+
+        foreach (var tx in transactions)
+        {
+            var index = bucketIndex(tx.CreatedAt);
+            if (index >= 0 && index < buckets)
+            {
+                totals[index] += tx.Amount;
+            }
+        }
+
+        return Json(new
+        {
+            period = period,
+            labels,
+            totals
+        });
+    }
+
     public IActionResult DataPackages()
     {
         var userId = HttpContext.Session.GetInt32("UserId")!.Value;

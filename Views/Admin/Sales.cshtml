@@ -63,6 +63,9 @@
 
                                 var isUpcoming = sale.StartAt != null && sale.StartAt > now;
                                 var isExpired = sale.EndAt != null && sale.EndAt < now;
+                                var durationDays = (sale.StartAt != null && sale.EndAt != null)
+                                    ? (sale.EndAt.Value - sale.StartAt.Value).TotalDays
+                                    : 0;
 
                                 <tr>
                                     <td style="min-width: 260px;">
@@ -82,8 +85,20 @@
                                             <span>-@sale.SaleValue.ToString("N0") VND</span>
                                         }
                                     </td>
-                                    <td>@(sale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
-                                    <td>@(sale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>
+                                        <div>@(sale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                        @if (durationDays > 1)
+                                        {
+                                            <div class="small text-muted">Note: Multi-day sale</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@(sale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                        @if (durationDays > 1)
+                                        {
+                                            <div class="small text-muted">Duration: @Math.Ceiling(durationDays) days</div>
+                                        }
+                                    </td>
                                     <td>
                                         @if (isActive)
                                         {
@@ -148,6 +163,9 @@
 
                                 var isUpcoming = productSale.StartAt != null && productSale.StartAt > now;
                                 var isExpired = productSale.EndAt != null && productSale.EndAt < now;
+                                var durationDays = (productSale.StartAt != null && productSale.EndAt != null)
+                                    ? (productSale.EndAt.Value - productSale.StartAt.Value).TotalDays
+                                    : 0;
 
                                 <tr>
                                     <td style="min-width: 260px;">
@@ -167,8 +185,20 @@
                                             <span>-@productSale.SaleValue.ToString("N0") VND</span>
                                         }
                                     </td>
-                                    <td>@(productSale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
-                                    <td>@(productSale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>
+                                        <div>@(productSale.StartAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                        @if (durationDays > 1)
+                                        {
+                                            <div class="small text-muted">Note: Multi-day sale</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@(productSale.EndAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                        @if (durationDays > 1)
+                                        {
+                                            <div class="small text-muted">Duration: @Math.Ceiling(durationDays) days</div>
+                                        }
+                                    </td>
                                     <td>
                                         @if (isActive)
                                         {

@@ -18,6 +18,9 @@ namespace Online_Mobile_Recharge.Models.Entities
         public string? PasswordResetTokenHash { get; set; }
         public DateTime? PasswordResetTokenExpiresAt { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? LastLockReason { get; set; }
+        public string? LastLockNote { get; set; }
+        public DateTime? LastLockedAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsDeleted { get; set; } = false;

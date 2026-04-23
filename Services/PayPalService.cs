@@ -8,11 +8,12 @@ namespace Online_Mobile_Recharge.Services;
 
 public class PayPalService
 {
-    private readonly HttpClient _httpClient = new();
+    private readonly HttpClient _httpClient;
     private readonly PayPalOptions _options;
 
-    public PayPalService(IOptions<PayPalOptions> options)
+    public PayPalService(HttpClient httpClient, IOptions<PayPalOptions> options)
     {
+        _httpClient = httpClient;
         _options = options.Value;
     }
 
@@ -104,5 +105,82 @@ public class PayPalService
 
         return (orderId, approveUrl);
     }
-}
 
+    public async Task<bool> CaptureOrderAsync(string accessToken, string orderId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(orderId))
+        {
+            return false;
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v2/checkout/orders/{orderId}/capture");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return false;
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var status = doc.RootElement.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
+        return string.Equals(status, "COMPLETED", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(status, "APPROVED", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public async Task<(string? Status, string? Currency, decimal? Amount)> GetOrderSummaryAsync(
+        string accessToken,
+        string orderId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(orderId))
+        {
+            return (null, null, null);
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/v2/checkout/orders/{orderId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (null, null, null);
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var status = doc.RootElement.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
+
+        try
+        {
+            if (doc.RootElement.TryGetProperty("purchase_units", out var purchaseUnits) &&
+                purchaseUnits.ValueKind == JsonValueKind.Array &&
+                purchaseUnits.GetArrayLength() > 0)
+            {
+                var firstUnit = purchaseUnits[0];
+                if (firstUnit.TryGetProperty("amount", out var amountEl))
+                {
+                    var currency = amountEl.TryGetProperty("currency_code", out var ccEl) ? ccEl.GetString() : null;
+                    var value = amountEl.TryGetProperty("value", out var valueEl) ? valueEl.GetString() : null;
+
+                    if (decimal.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                    {
+                        return (status, currency, parsed);
+                    }
+
+                    return (status, currency, null);
+                }
+            }
+        }
+        catch
+        {
+            // ignore parse errors and return whatever we have
+        }
+
+        return (status, null, null);
+    }
+}

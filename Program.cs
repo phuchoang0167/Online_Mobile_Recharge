@@ -20,7 +20,7 @@ builder.Services.AddScoped<DndService>();
 builder.Services.AddScoped<FeedbackService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<EmailNotificationService>();
-builder.Services.AddScoped<PayPalService>();
+builder.Services.AddHttpClient<PayPalService>();
 builder.Services.AddScoped<AdminAuditService>();
 
 builder.Services.AddSession();

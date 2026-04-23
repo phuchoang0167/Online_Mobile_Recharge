@@ -26,18 +26,25 @@ public class PhoneController : Controller
         model.Phone = (model.Phone ?? string.Empty).Trim();
         model.ReturnUrl = string.IsNullOrWhiteSpace(model.ReturnUrl) ? Url.Action("Index", "Product") : model.ReturnUrl;
 
-        if (!Regex.IsMatch(model.Phone, @"^0\d{9}$"))
+        var normalizedPhone = Regex.Replace(model.Phone, @"[^\d]", string.Empty);
+        if (!Regex.IsMatch(normalizedPhone, @"^0\d{9}$"))
         {
-            ModelState.AddModelError(nameof(model.Phone), "Số điện thoại không hợp lệ (định dạng 0xxxxxxxxx).");
+            ModelState.AddModelError(nameof(model.Phone), "Invalid phone number (format: 0xxxxxxxxx).");
         }
 
         if (!ModelState.IsValid)
         {
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                TempData["ErrorMessage"] = "Please enter a valid phone number (format: 0xxxxxxxxx).";
+                return LocalRedirect(model.ReturnUrl);
+            }
+
             return View(model);
         }
 
-        HttpContext.Session.SetString(SelectedPhoneSessionKey, model.Phone);
-        TempData["SuccessMessage"] = "Đã chọn số điện thoại.";
+        HttpContext.Session.SetString(SelectedPhoneSessionKey, normalizedPhone);
+        TempData["SuccessMessage"] = "Phone number selected.";
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
         {

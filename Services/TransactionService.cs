@@ -14,11 +14,13 @@ public class PaymentProcessResult
 public class TransactionService
 {
     private readonly MobileRechargeDbContext _context;
+    private readonly PayPalService _payPalService;
     private const int PostpaidLockGraceDays = 2;
 
-    public TransactionService(MobileRechargeDbContext context)
+    public TransactionService(MobileRechargeDbContext context, PayPalService payPalService)
     {
         _context = context;
+        _payPalService = payPalService;
     }
 
     public Transaction CreatePostpaid(int productId, int userId, string phone)
@@ -518,7 +520,12 @@ public class TransactionService
         };
     }
 
-    public PaymentProcessResult CompletePayPalApproved(int transactionId, int userId, string? orderId, string? payerId)
+    public async Task<PaymentProcessResult> CompletePayPalApprovedAsync(
+        int transactionId,
+        int userId,
+        string? orderId,
+        string? payerId,
+        CancellationToken cancellationToken)
     {
         var transaction = _context.Transactions
             .Include(x => x.Product)
@@ -537,6 +544,24 @@ public class TransactionService
             };
         }
 
+        var returnedOrderId = (orderId ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(returnedOrderId))
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "Invalid PayPal return (missing order id)."
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(transaction.PaymentExternalId) &&
+            !string.Equals(transaction.PaymentExternalId, returnedOrderId, StringComparison.OrdinalIgnoreCase))
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "Invalid PayPal return (order id mismatch)."
+            };
+        }
+
         if (!string.IsNullOrWhiteSpace(orderId))
         {
             transaction.PaymentExternalId = orderId;
@@ -545,6 +570,48 @@ public class TransactionService
         if (!string.IsNullOrWhiteSpace(payerId))
         {
             transaction.PaymentExternalPayerId = payerId;
+        }
+
+        var accessToken = await _payPalService.GetAccessTokenAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "PayPal sandbox is not configured correctly (token request failed)."
+            };
+        }
+
+        var (status, currency, amount) = await _payPalService.GetOrderSummaryAsync(
+            accessToken,
+            returnedOrderId,
+            cancellationToken);
+
+        if (!string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "PayPal order currency mismatch."
+            };
+        }
+
+        if (amount == null || decimal.Round(amount.Value, 2) != decimal.Round(transaction.Amount, 2))
+        {
+            return new PaymentProcessResult
+            {
+                ErrorMessage = "PayPal order amount mismatch."
+            };
+        }
+
+        if (!string.Equals(status, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+        {
+            var captured = await _payPalService.CaptureOrderAsync(accessToken, returnedOrderId, cancellationToken);
+            if (!captured)
+            {
+                return new PaymentProcessResult
+                {
+                    ErrorMessage = "Could not capture the PayPal order."
+                };
+            }
         }
 
         var now = DateTime.Now;

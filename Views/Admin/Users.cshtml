@@ -15,6 +15,11 @@
         <div class="soft-pill">@Model.Count(x => x.Role != "Admin") users</div>
     </div>
 
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 app-table">
             <thead>
@@ -49,6 +54,16 @@
                             else
                             {
                                 <span class="badge bg-warning text-dark">Locked</span>
+                                @if (!string.IsNullOrWhiteSpace(item.LastLockReason))
+                                {
+                                    <div class="small text-muted mt-1">
+                                        Reason: <strong>@item.LastLockReason</strong>
+                                        @if (item.LastLockedAt != null)
+                                        {
+                                            <span> • @item.LastLockedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        }
+                                    </div>
+                                }
                             }
                         </td>
                         <td>
@@ -62,6 +77,20 @@
                                 <form asp-action="ToggleUser" method="post" class="d-inline" data-confirm-title="Update user status" data-confirm-message="Are you sure you want to @(item.IsActive ? "lock" : "unlock") this user?">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.Id" />
+
+                                    @if (item.IsActive)
+                                    {
+                                        <div class="d-grid gap-2 mt-2" style="min-width: 220px;">
+                                            <select name="lockReason" class="form-select form-select-sm" required>
+                                                <option value="" selected disabled>Lock reason</option>
+                                                <option value="Overdue postpaid">Overdue postpaid</option>
+                                                <option value="Fraud suspected">Fraud suspected</option>
+                                                <option value="Abuse / policy violation">Abuse / policy violation</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <textarea name="lockNote" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Lock note (optional)"></textarea>
+                                        </div>
+                                    }
                                     <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")">
                                         @(item.IsActive ? "Lock" : "Unlock")
                                     </button>

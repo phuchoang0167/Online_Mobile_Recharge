@@ -73,10 +73,10 @@ public class PaymentController : Controller
     }
 
     [HttpGet("PayPalReturn")]
-    public IActionResult PayPalReturn(int tx, string? token, string? PayerID)
+    public async Task<IActionResult> PayPalReturn(int tx, string? token, string? PayerID, CancellationToken cancellationToken)
     {
         var userId = HttpContext.Session.GetInt32("UserId")!.Value;
-        var result = _transactionService.CompletePayPalApproved(tx, userId, token, PayerID);
+        var result = await _transactionService.CompletePayPalApprovedAsync(tx, userId, token, PayerID, cancellationToken);
 
         if (!result.IsSuccess || result.Transaction == null)
         {
@@ -96,4 +96,3 @@ public class PaymentController : Controller
         return RedirectToAction("Index", "UserTransaction");
     }
 }
-

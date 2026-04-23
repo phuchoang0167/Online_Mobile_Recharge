@@ -542,6 +542,17 @@ namespace Online_Mobile_Recharge.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastLockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastLockNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LastLockReason")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)

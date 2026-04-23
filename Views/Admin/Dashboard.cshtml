@@ -95,6 +95,54 @@
     </div>
 </div>
 
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="content-panel h-100 chart-card">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <div>
+                    <h4 class="display-font mb-1">Best-selling products</h4>
+                    <p class="text-muted mb-0">Top products by sold count (with revenue as tiebreaker), grouped by day/week/year.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="soft-pill">Group by</span>
+                    <select id="bestPeriod" class="form-select form-select-sm" style="width: 140px;">
+                        <option value="day">Day</option>
+                        <option value="week" selected>Week</option>
+                        <option value="year">Year</option>
+                    </select>
+                    <span class="soft-pill">From</span>
+                    <input id="bestFrom" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <span class="soft-pill">To</span>
+                    <input id="bestTo" type="date" class="form-control form-control-sm" style="width: 160px;" />
+                    <button id="bestApply" type="button" class="btn btn-outline-secondary btn-sm">Apply</button>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <canvas id="bestSellerChart" class="chart-canvas" aria-label="Best seller chart"></canvas>
+                </div>
+                <div class="col-lg-5">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0 app-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">Sold</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bestSellerTable">
+                                <tr><td colspan="3" class="text-muted">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <div class="col-xl-7">
         <div class="content-panel h-100">
@@ -459,6 +507,132 @@
 
             setDefaultRangeForPeriod(revenuePeriod?.value ?? "week", revenueFrom, revenueTo);
             refreshRevenue(revenuePeriod?.value ?? "week");
+
+            let bestChart = null;
+            const bestCanvas = document.getElementById("bestSellerChart");
+            const bestPeriod = document.getElementById("bestPeriod");
+            const bestFrom = document.getElementById("bestFrom");
+            const bestTo = document.getElementById("bestTo");
+            const bestApply = document.getElementById("bestApply");
+            const bestTable = document.getElementById("bestSellerTable");
+
+            async function loadBestSellers(period) {
+                const params = new URLSearchParams({ period: period || "week", top: "8" });
+
+                if (bestFrom?.value) {
+                    params.set("from", bestFrom.value);
+                }
+
+                if (bestTo?.value) {
+                    params.set("to", bestTo.value);
+                }
+
+                const response = await fetch(`/Admin/BestSellersData?${params.toString()}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`BestSellersData request failed: ${response.status}`);
+                }
+
+                return await response.json();
+            }
+
+            function renderBestSellerTable(items) {
+                if (!bestTable) {
+                    return;
+                }
+
+                const rows = (items || []).map(function (item) {
+                    const name = item?.name ?? "Unknown";
+                    const type = item?.type ?? "";
+                    const sold = item?.soldCount ?? 0;
+                    const revenue = item?.revenue ?? 0;
+                    const typeText = type ? `(${type})` : "";
+
+                    return `<tr>
+                        <td style="min-width: 220px;"><strong>${name}</strong><div class="small text-muted">${typeText}</div></td>
+                        <td class="text-end">${sold}</td>
+                        <td class="text-end">${moneyFormatter.format(revenue)} VND</td>
+                    </tr>`;
+                }).join("");
+
+                bestTable.innerHTML = rows || `<tr><td colspan="3" class="text-muted">No data for this range.</td></tr>`;
+            }
+
+            function renderBestSellerChart(items) {
+                if (!bestCanvas) {
+                    return;
+                }
+
+                if (bestChart) {
+                    bestChart.destroy();
+                }
+
+                const labels = (items || []).map(x => x.name);
+                const sold = (items || []).map(x => x.soldCount);
+
+                bestChart = new Chart(bestCanvas, {
+                    type: "bar",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: "Sold count",
+                                data: sold,
+                                backgroundColor: "rgba(15, 118, 110, 0.22)",
+                                borderColor: "#0f766e",
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 },
+                                grid: { color: "rgba(15, 23, 42, 0.08)" }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: "bottom" }
+                        }
+                    }
+                });
+            }
+
+            async function refreshBestSellers(period) {
+                try {
+                    const data = await loadBestSellers(period);
+                    const items = data?.items ?? [];
+                    renderBestSellerTable(items);
+                    renderBestSellerChart(items);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            if (bestPeriod) {
+                bestPeriod.addEventListener("change", function () {
+                    setDefaultRangeForPeriod("week", bestFrom, bestTo);
+                    refreshBestSellers(bestPeriod.value);
+                });
+            }
+
+            if (bestApply) {
+                bestApply.addEventListener("click", function () {
+                    refreshBestSellers(bestPeriod?.value ?? "week");
+                });
+            }
+
+            setDefaultRangeForPeriod("week", bestFrom, bestTo);
+            refreshBestSellers(bestPeriod?.value ?? "week");
         });
     </script>
 }
