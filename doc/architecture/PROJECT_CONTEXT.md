@@ -4,7 +4,7 @@
 - ASP.NET Core MVC + EF Core + SQL Server.
 - Entry point: `Program.cs`.
 - Layers: `Controllers` -> `Services` -> `DbContext`/`Entities` -> `Views`.
-- Auth: cookie auth + session + custom role filters.
+- Auth: cookie auth + session + custom role filters + daily login lockout after repeated failed attempts.
 
 ## Module Relationships
 - `AccountController` -> auth, register, verify email, reset password.

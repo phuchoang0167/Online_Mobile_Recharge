@@ -203,6 +203,9 @@ public class MobileRechargeDbContext : DbContext
             .Property(u => u.LastLockNote)
             .HasMaxLength(500);
 
+        modelBuilder.Entity<User>()
+            .HasIndex(u => new { u.Email, u.FailedLoginDate });
+
         modelBuilder.Entity<Transaction>()
             .Property(t => t.PhoneNumber)
             .IsRequired();

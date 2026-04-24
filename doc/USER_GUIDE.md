@@ -24,6 +24,7 @@
 - Enter your email and password
 - If you forget the password, open `/Account/ResetPassword`
 - Use the reset link from email or the demo fallback link on the login page
+- Security note: if you enter an incorrect password 3 times in the same day, the account is temporarily locked until the next day
 
 ## Buy a Product
 - Open `/Product`

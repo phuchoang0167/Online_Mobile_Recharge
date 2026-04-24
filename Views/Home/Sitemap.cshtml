@@ -47,6 +47,9 @@
                         <li><a asp-controller="Home" asp-action="About">About</a></li>
                         <li><a asp-controller="Home" asp-action="Faq">FAQ</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                        <li><a asp-controller="Home" asp-action="Terms">Terms</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        <li><a asp-controller="Home" asp-action="Sitemap">Sitemap</a></li>
                     </ul>
                 </article>
 
@@ -70,10 +73,13 @@
                     <ul class="sitemap-links">
                         <li><a asp-controller="User" asp-action="Dashboard">Dashboard</a></li>
                         <li><a asp-controller="User" asp-action="Profile">Profile</a></li>
+                        <li><a asp-controller="User" asp-action="Settings">Settings</a></li>
                         <li><a asp-controller="UserTransaction" asp-action="Index">Transaction History</a></li>
                         <li><a asp-controller="UserCard" asp-action="Index">Cards</a></li>
+                        <li><a asp-controller="User" asp-action="DataPackages">Data Packages</a></li>
                         <li><a asp-controller="Dnd" asp-action="Index">DND</a></li>
                         <li><a asp-controller="CallerTune" asp-action="Index">Caller Tune</a></li>
+                        <li><a asp-controller="Feedback" asp-action="Index">Feedback</a></li>
                     </ul>
                 </article>
 
@@ -87,143 +93,12 @@
                         <li><a asp-controller="Admin" asp-action="Users">Users</a></li>
                         <li><a asp-controller="AdminTransaction" asp-action="Index">Transactions</a></li>
                         <li><a asp-controller="Admin" asp-action="Feedbacks">Feedbacks</a></li>
+                        <li><a asp-controller="AdminCallerTune" asp-action="Index">Caller Tune Library</a></li>
+                        <li><a asp-controller="Admin" asp-action="AuditLogs">Audit Logs</a></li>
                     </ul>
                 </article>
             </div>
         </div>
     </div>
 
-    <div class="content-panel">
-        <div class="section-header-row mb-3">
-            <div>
-                <span class="eyebrow">Public pages</span>
-                <h2 class="section-heading display-font">Open access pages</h2>
-            </div>
-        </div>
-
-        <div class="policy-grid">
-            <article class="policy-card">
-                <h5>Home</h5>
-                <p class="mb-0">Landing page with featured services, policies, and quick links.</p>
-                <a asp-controller="Home" asp-action="Index" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open page</a>
-            </article>
-            <article class="policy-card">
-                <h5>Products</h5>
-                <p class="mb-0">Browse product packages, recharge cards, and service details.</p>
-                <a asp-controller="Product" asp-action="Index" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open page</a>
-            </article>
-            <article class="policy-card">
-                <h5>About / FAQ / Contact</h5>
-                <p class="mb-0">Project information, support answers, and contact form.</p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Home" asp-action="About" class="btn btn-outline-secondary btn-sm">About</a>
-                    <a asp-controller="Home" asp-action="Faq" class="btn btn-outline-secondary btn-sm">FAQ</a>
-                    <a asp-controller="Home" asp-action="Contact" class="btn btn-outline-secondary btn-sm">Contact</a>
-                </div>
-            </article>
-            <article class="policy-card">
-                <h5>How It Works / Terms / Privacy / Sitemap</h5>
-                <p class="mb-0">Static pages for process explanation, policies, and website structure.</p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Home" asp-action="HowItWorks" class="btn btn-outline-secondary btn-sm">Guide</a>
-                    <a asp-controller="Home" asp-action="Terms" class="btn btn-outline-secondary btn-sm">Terms</a>
-                    <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-secondary btn-sm">Privacy</a>
-                </div>
-            </article>
-        </div>
-    </div>
-
-    <div class="content-panel">
-        <div class="section-header-row mb-3">
-            <div>
-                <span class="eyebrow">Authentication</span>
-                <h2 class="section-heading display-font">Account access flow</h2>
-            </div>
-        </div>
-
-        <div class="support-list">
-            <div class="support-item">
-                <h5>Login</h5>
-                <p class="mb-0">Sign in to access dashboards and role-based features.</p>
-                <a asp-controller="Account" asp-action="Login" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Login</a>
-            </div>
-            <div class="support-item">
-                <h5>Register</h5>
-                <p class="mb-0">Create a new user account with email verification support.</p>
-                <a asp-controller="Account" asp-action="Register" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Register</a>
-            </div>
-            <div class="support-item">
-                <h5>Reset password</h5>
-                <p class="mb-0">Recover account access through reset link fallback flow.</p>
-                <a asp-controller="Account" asp-action="ResetPassword" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Reset</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-panel">
-        <div class="section-header-row mb-3">
-            <div>
-                <span class="eyebrow">User area</span>
-                <h2 class="section-heading display-font">Pages for logged-in users</h2>
-            </div>
-        </div>
-
-        <div class="policy-grid">
-            <article class="policy-card">
-                <h5>User Dashboard</h5>
-                <p class="mb-0">Overview of spending, pending bills, cards, and latest transactions.</p>
-                <a asp-controller="User" asp-action="Dashboard" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Dashboard</a>
-            </article>
-            <article class="policy-card">
-                <h5>Profile</h5>
-                <p class="mb-0">Update basic account information and password.</p>
-                <a asp-controller="User" asp-action="Profile" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Profile</a>
-            </article>
-            <article class="policy-card">
-                <h5>Transaction History / Pay Bill</h5>
-                <p class="mb-0">Review transactions and settle pending postpaid bills.</p>
-                <a asp-controller="UserTransaction" asp-action="Index" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Transactions</a>
-            </article>
-            <article class="policy-card">
-                <h5>Cards / DND / Caller Tune / Feedback</h5>
-                <p class="mb-0">Manage telecom-related services and review personal feedback.</p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="UserCard" asp-action="Index" class="btn btn-outline-secondary btn-sm">Cards</a>
-                    <a asp-controller="Dnd" asp-action="Index" class="btn btn-outline-secondary btn-sm">DND</a>
-                    <a asp-controller="CallerTune" asp-action="Index" class="btn btn-outline-secondary btn-sm">Caller Tune</a>
-                    <a asp-controller="Feedback" asp-action="Index" class="btn btn-outline-secondary btn-sm">Feedback</a>
-                </div>
-            </article>
-        </div>
-    </div>
-
-    <div class="content-panel">
-        <div class="section-header-row mb-3">
-            <div>
-                <span class="eyebrow">Admin area</span>
-                <h2 class="section-heading display-font">Pages for management and review</h2>
-            </div>
-        </div>
-
-        <div class="support-list">
-            <div class="support-item">
-                <h5>Admin Dashboard</h5>
-                <p class="mb-0">Summary of users, revenue, pending bills, overdue bills, and latest activity.</p>
-                <a asp-controller="Admin" asp-action="Dashboard" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Dashboard</a>
-            </div>
-            <div class="support-item">
-                <h5>Users</h5>
-                <p class="mb-0">Edit, lock, or soft-delete user accounts.</p>
-                <a asp-controller="Admin" asp-action="Users" class="text-decoration-none fw-semibold mt-3 d-inline-block">Open Users</a>
-            </div>
-            <div class="support-item">
-                <h5>Transactions / Feedbacks</h5>
-                <p class="mb-0">Review system-wide transactions and reply to user feedback.</p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="AdminTransaction" asp-action="Index" class="btn btn-outline-secondary btn-sm">Transactions</a>
-                    <a asp-controller="Admin" asp-action="Feedbacks" class="btn btn-outline-secondary btn-sm">Feedbacks</a>
-                </div>
-            </div>
-        </div>
-    </div>
 </section>

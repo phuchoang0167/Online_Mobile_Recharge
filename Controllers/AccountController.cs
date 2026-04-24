@@ -44,6 +44,7 @@ namespace Online_Mobile_Recharge.Controllers
                 return View(model);
             }
 
+            var now = DateTime.Now;
             var normalizedEmail = PasswordHelper.NormalizeEmail(model.Email);
             var user = await _context.Users
                 .FirstOrDefaultAsync(x => x.Email == normalizedEmail && !x.IsDeleted);
@@ -60,9 +61,26 @@ namespace Online_Mobile_Recharge.Controllers
                 return View(model);
             }
 
+            if (user.LoginLockoutUntil != null && user.LoginLockoutUntil.Value > now)
+            {
+                var unlockAt = user.LoginLockoutUntil.Value.ToString("dd/MM/yyyy HH:mm");
+                ModelState.AddModelError(string.Empty, $"Too many failed login attempts. Your account is temporarily locked until {unlockAt}.");
+                return View(model);
+            }
+
+            if (user.LoginLockoutUntil != null && user.LoginLockoutUntil.Value <= now)
+            {
+                user.LoginLockoutUntil = null;
+            }
+
+            if (user.FailedLoginDate == null || user.FailedLoginDate.Value.Date != now.Date)
+            {
+                user.FailedLoginDate = now.Date;
+                user.FailedLoginAttempts = 0;
+            }
+
             if (user.Role == "User")
             {
-                var now = DateTime.Now;
                 var lockThreshold = now.AddDays(-2);
                 var hasOverduePostpaid = await _context.Transactions
                     .AsNoTracking()
@@ -103,15 +121,39 @@ namespace Online_Mobile_Recharge.Controllers
             var passwordCheck = PasswordHelper.VerifyPassword(user, model.Password);
             if (!passwordCheck.IsValid)
             {
-                ModelState.AddModelError(string.Empty, "Incorrect email or password.");
+                user.FailedLoginAttempts += 1;
+                user.FailedLoginDate = now.Date;
+
+                if (user.FailedLoginAttempts >= 3)
+                {
+                    user.LoginLockoutUntil = now.Date.AddDays(1);
+                    user.LastLockedAt = now;
+                    user.LastLockReason = "Too many failed login attempts";
+                }
+
+                await _context.SaveChangesAsync();
+
+                if (user.LoginLockoutUntil != null && user.LoginLockoutUntil.Value > now)
+                {
+                    var unlockAt = user.LoginLockoutUntil.Value.ToString("dd/MM/yyyy HH:mm");
+                    ModelState.AddModelError(string.Empty, $"Too many failed login attempts. Your account is temporarily locked until {unlockAt}.");
+                    return View(model);
+                }
+
+                var remainingAttempts = Math.Max(0, 3 - user.FailedLoginAttempts);
+                ModelState.AddModelError(string.Empty, $"Incorrect email or password. Remaining attempts today: {remainingAttempts}.");
                 return View(model);
             }
 
             if (passwordCheck.ShouldUpgrade)
             {
                 user.Password = PasswordHelper.HashPassword(user, model.Password);
-                await _context.SaveChangesAsync();
             }
+
+            user.FailedLoginAttempts = 0;
+            user.FailedLoginDate = now.Date;
+            user.LoginLockoutUntil = null;
+            await _context.SaveChangesAsync();
 
             await SignInUserAsync(user);
             return RedirectAfterLogin(user, returnUrl);

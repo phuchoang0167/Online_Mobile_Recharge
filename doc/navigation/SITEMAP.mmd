@@ -16,6 +16,12 @@ flowchart TD
     Products --> ProductDetail[Product Detail]
     ProductDetail --> Checkout[Checkout]
     Checkout --> Success[Checkout Success]
+    ProductDetail --> GuestCheckout[Guest Checkout (Topup)]
+    GuestCheckout --> GuestSuccess[Guest Success]
+    GuestCheckout --> GuestPayPal[Guest PayPal Approval]
+
+    Checkout --> PayPalApproval[PayPal Approval (Sandbox)]
+    PayPalApproval --> Success
 
     Login --> ResetPassword[Reset Password]
     Register --> EmailVerify[Email Verify]
@@ -30,6 +36,7 @@ flowchart TD
     UserDashboard --> Notifications[Notification Bell]
 
     UserTransactions --> PayPostpaid[Pay Postpaid Bill]
+    PayPostpaid --> PostpaidPayPal[Postpaid PayPal Approval]
     UserTransactions --> Invoice[Invoice / Bill PDF]
 
     Home --> AdminDashboard[Admin Dashboard]

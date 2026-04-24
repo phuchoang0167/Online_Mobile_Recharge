@@ -21,6 +21,10 @@ namespace Online_Mobile_Recharge.Models.Entities
         public string? LastLockReason { get; set; }
         public string? LastLockNote { get; set; }
         public DateTime? LastLockedAt { get; set; }
+
+        public int FailedLoginAttempts { get; set; }
+        public DateTime? FailedLoginDate { get; set; }
+        public DateTime? LoginLockoutUntil { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsDeleted { get; set; } = false;
