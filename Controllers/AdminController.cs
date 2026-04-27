@@ -917,6 +917,12 @@ public class AdminController : Controller
         }
 
         user.IsActive = !user.IsActive;
+        if (user.IsActive)
+        {
+            user.LoginLockoutUntil = null;
+            user.FailedLoginAttempts = 0;
+            user.FailedLoginDate = null;
+        }
 
         await _context.SaveChangesAsync();
         var toggleAuditLog = await AddAuditLogAsync(
@@ -929,6 +935,32 @@ public class AdminController : Controller
         TempData["LastAuditLogId"] = toggleAuditLog.Id;
         TempData["LastAuditLogSummary"] = toggleAuditLog.Summary;
 
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ClearLoginLockout(int id)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (user.Role == "Admin")
+        {
+            return BadRequest("Cannot unlock admin");
+        }
+
+        user.LoginLockoutUntil = null;
+        user.FailedLoginAttempts = 0;
+        user.FailedLoginDate = null;
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Cleared login lockout for user #{user.Id}.";
         return RedirectToAction(nameof(Users));
     }
 

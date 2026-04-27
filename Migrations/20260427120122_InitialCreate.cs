@@ -125,6 +125,9 @@ namespace Online_Mobile_Recharge.Migrations
                     LastLockReason = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     LastLockNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     LastLockedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FailedLoginAttempts = table.Column<int>(type: "int", nullable: false),
+                    FailedLoginDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LoginLockoutUntil = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -434,6 +437,11 @@ namespace Online_Mobile_Recharge.Migrations
                 table: "Users",
                 column: "Email",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email_FailedLoginDate",
+                table: "Users",
+                columns: new[] { "Email", "FailedLoginDate" });
         }
 
         /// <inheritdoc />

@@ -81,7 +81,8 @@ namespace Online_Mobile_Recharge.Controllers
 
             if (user.Role == "User")
             {
-                var lockThreshold = now.AddDays(-2);
+                const int postpaidLockGraceDays = 3;
+                var lockThreshold = now.AddDays(-postpaidLockGraceDays);
                 var hasOverduePostpaid = await _context.Transactions
                     .AsNoTracking()
                     .AnyAsync(x =>
@@ -95,13 +96,19 @@ namespace Online_Mobile_Recharge.Controllers
                 if (hasOverduePostpaid)
                 {
                     user.IsActive = false;
+                    user.LastLockedAt = now;
+                    user.LastLockReason = "Overdue postpaid bill (more than 3 days past due date)";
                     await _context.SaveChangesAsync();
                 }
             }
 
             if (!user.IsActive)
             {
-                ModelState.AddModelError(string.Empty, "Your account is currently locked.");
+                var lockReason = (user.LastLockReason ?? string.Empty).Trim();
+                var message = string.IsNullOrWhiteSpace(lockReason)
+                    ? "Your account is currently locked."
+                    : $"Your account is currently locked. Reason: {lockReason}.";
+                ModelState.AddModelError(string.Empty, message);
                 return View(model);
             }
 

@@ -25,13 +25,13 @@ public class UserAuthorizeAttribute : ActionFilterAttribute
             return;
         }
 
-        if (role == "Admin")
+        if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
         {
             context.Result = new RedirectToActionResult("Dashboard", "Admin", null);
             return;
         }
 
-        if (role != "User")
+        if (!string.Equals(role, "User", StringComparison.OrdinalIgnoreCase))
         {
             context.Result = new RedirectToActionResult("Login", "Account", null);
             return;
@@ -42,7 +42,7 @@ public class UserAuthorizeAttribute : ActionFilterAttribute
             .AsNoTracking()
             .FirstOrDefault(x => x.Id == userId.Value && !x.IsDeleted && x.IsActive);
 
-        if (user == null || user.Role != "User")
+        if (user == null || !string.Equals(user.Role, "User", StringComparison.OrdinalIgnoreCase))
         {
             httpContext.Session.Clear();
             context.Result = new RedirectToActionResult("Login", "Account", null);

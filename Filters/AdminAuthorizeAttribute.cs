@@ -18,7 +18,7 @@ public class AdminAuthorizeAttribute : ActionFilterAttribute
         var role = claimRole ?? sessionRole;
         var userId = int.TryParse(claimUserId, out var parsedUserId) ? parsedUserId : sessionUserId;
 
-        if (userId == null || role != "Admin")
+        if (userId == null || !string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
         {
             context.Result = new RedirectToActionResult("Login", "Account", null);
             return;
@@ -29,7 +29,7 @@ public class AdminAuthorizeAttribute : ActionFilterAttribute
             .AsNoTracking()
             .FirstOrDefault(x => x.Id == userId.Value && !x.IsDeleted && x.IsActive);
 
-        if (admin == null || admin.Role != "Admin")
+        if (admin == null || !string.Equals(admin.Role, "Admin", StringComparison.OrdinalIgnoreCase))
         {
             httpContext.Session.Clear();
             context.Result = new RedirectToActionResult("Login", "Account", null);

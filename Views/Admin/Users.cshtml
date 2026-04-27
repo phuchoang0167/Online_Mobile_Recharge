@@ -22,6 +22,11 @@
         <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
     }
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
     <form method="get" class="row g-2 align-items-end mb-3">
         <div class="col-12 col-md-7">
             <label class="form-label mb-1">Search</label>
@@ -70,7 +75,22 @@
                         <td>
                             @if (item.IsActive)
                             {
-                                <span class="badge bg-success">Active</span>
+                                var now = DateTime.Now;
+                                if (item.LoginLockoutUntil != null && item.LoginLockoutUntil.Value > now)
+                                {
+                                    <span class="badge bg-danger">Login locked</span>
+                                    <div class="small text-muted mt-1">
+                                        Until: <strong>@item.LoginLockoutUntil.Value.ToString("dd/MM/yyyy HH:mm")</strong>
+                                        @if (!string.IsNullOrWhiteSpace(item.LastLockReason))
+                                        {
+                                            <span>@item.LastLockReason</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
                             }
                             else
                             {
@@ -94,6 +114,15 @@
                                    class="btn btn-outline-secondary btn-sm">
                                     Edit
                                 </a>
+
+                                @if (item.IsActive && item.LoginLockoutUntil != null && item.LoginLockoutUntil.Value > DateTime.Now)
+                                {
+                                    <form asp-action="ClearLoginLockout" method="post" class="d-inline" data-confirm-title="Clear login lockout" data-confirm-message="Clear the login lockout so the user can sign in again?">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Clear lockout</button>
+                                    </form>
+                                }
 
                                 <form asp-action="ToggleUser" method="post" class="d-inline" data-confirm-title="Update user status" data-confirm-message="Are you sure you want to @(item.IsActive ? "lock" : "unlock") this user?">
                                     @Html.AntiForgeryToken()

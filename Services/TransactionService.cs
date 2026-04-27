@@ -15,7 +15,7 @@ public class TransactionService
 {
     private readonly MobileRechargeDbContext _context;
     private readonly PayPalService _payPalService;
-    private const int PostpaidLockGraceDays = 2;
+    private const int PostpaidLockGraceDays = 3;
 
     public TransactionService(MobileRechargeDbContext context, PayPalService payPalService)
     {
@@ -53,6 +53,8 @@ public class TransactionService
                 if (user != null)
                 {
                     user.IsActive = false;
+                    user.LastLockedAt = now;
+                    user.LastLockReason = $"Overdue postpaid bill (more than {PostpaidLockGraceDays} days past due date)";
                     _context.SaveChanges();
                 }
 

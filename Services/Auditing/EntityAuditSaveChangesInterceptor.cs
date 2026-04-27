@@ -15,10 +15,14 @@ public sealed class EntityAuditSaveChangesInterceptor : SaveChangesInterceptor
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly ConditionalWeakTable<DbContext, List<PendingAudit>> PendingAuditsByContext = new();
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EntityAuditSaveChangesInterceptor(IHttpContextAccessor httpContextAccessor)
+    public EntityAuditSaveChangesInterceptor(
+        IHttpContextAccessor httpContextAccessor,
+        IServiceScopeFactory scopeFactory)
     {
         _httpContextAccessor = httpContextAccessor;
+        _scopeFactory = scopeFactory;
     }
 
     private sealed record PendingAudit(
@@ -189,8 +193,7 @@ public sealed class EntityAuditSaveChangesInterceptor : SaveChangesInterceptor
         }
 
         // Use a fresh DbContext instance to persist audit logs, so we don't interfere with the current unit-of-work.
-        var scopeFactory = sourceContext.GetService<IServiceScopeFactory>();
-        using var scope = scopeFactory.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
         var auditDb = scope.ServiceProvider.GetRequiredService<MobileRechargeDbContext>();
 
         foreach (var item in pending)

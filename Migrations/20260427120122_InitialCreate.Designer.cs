@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Online_Mobile_Recharge.Migrations
 {
     [DbContext(typeof(MobileRechargeDbContext))]
-    [Migration("20260424055907_DailyLoginLockout")]
-    partial class DailyLoginLockout
+    [Migration("20260427120122_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

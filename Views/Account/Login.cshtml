@@ -45,6 +45,13 @@
                 <div class="alert alert-danger">@TempData["AuthError"]</div>
             }
 
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+
             @if (!string.IsNullOrWhiteSpace(debugLink))
             {
                 <div class="alert alert-warning small demo-link-alert">
