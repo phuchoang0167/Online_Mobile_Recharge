@@ -131,5 +131,5 @@ Common Gmail error:
 
 ## License
 
-Internal / educational project (add your license terms here if needed).
+Internal / educational project.
 
