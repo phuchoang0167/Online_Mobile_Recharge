@@ -23,6 +23,65 @@ public class EmailNotificationService
 
     public bool IsConfigured => _smtpOptions.IsConfigured;
 
+    public async Task<(bool Ok, string Stage, string? Error)> ProbeSmtpAsync()
+    {
+        if (!IsConfigured)
+        {
+            return (false, "config", "SMTP is not configured.");
+        }
+
+        try
+        {
+            using var client = new SmtpClient();
+            client.Timeout = 15000;
+            client.CheckCertificateRevocation = false;
+            client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+            var socketOptions = ResolveSocketOptions(_smtpOptions.Port, _smtpOptions.EnableSsl);
+            var userName = (_smtpOptions.UserName ?? string.Empty).Trim();
+            var password = (_smtpOptions.Password ?? string.Empty).Trim();
+
+            await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port, socketOptions);
+
+            try
+            {
+                await client.AuthenticateAsync(userName, password);
+            }
+            catch (Exception authEx)
+            {
+                await client.DisconnectAsync(true);
+                return (false, "auth", authEx.Message);
+            }
+
+            await client.DisconnectAsync(true);
+            return (true, "ok", null);
+        }
+        catch (Exception ex)
+        {
+            // Most failures here are DNS/Connect/TLS handshake issues.
+            return (false, "connect", ex.Message);
+        }
+    }
+
+    public async Task<bool> SendSmtpTestAsync(string toEmail, string? toName = null)
+    {
+        toEmail = (toEmail ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(toEmail))
+        {
+            return false;
+        }
+
+        var subject = "SMTP test - Online Mobile Recharge";
+        var body = $"""
+            <div style="font-family:Segoe UI,Arial,sans-serif;line-height:1.6;color:#0f172a;">
+                <h2 style="margin-bottom:12px;">SMTP test</h2>
+                <p>This is a test email sent from Online Mobile Recharge at {DateTime.Now:dd/MM/yyyy HH:mm}.</p>
+            </div>
+            """;
+
+        return await SendAsync(toEmail, string.IsNullOrWhiteSpace(toName) ? toEmail : toName, subject, body);
+    }
+
     public async Task<bool> SendContactConfirmationAsync(string name, string email, string messageType)
     {
         var subject = $"We received your {messageType}";
@@ -175,7 +234,7 @@ public class EmailNotificationService
         return await SendAsync(user.Email, user.Name, "Package updated", body);
     }
 
-    private async Task<bool> SendAsync(
+    public async Task<(bool Sent, string? Error)> TrySendAsync(
         string toEmail,
         string toName,
         string subject,
@@ -186,7 +245,7 @@ public class EmailNotificationService
         if (!IsConfigured)
         {
             _logger.LogInformation("SMTP is not configured, skipped email to {Email}.", toEmail);
-            return false;
+            return (false, "SMTP is not configured.");
         }
 
         try
@@ -209,6 +268,9 @@ public class EmailNotificationService
             }.ToMessageBody();
 
             using var client = new SmtpClient();
+            client.Timeout = 15000;
+            client.CheckCertificateRevocation = false;
+            client.AuthenticationMechanisms.Remove("XOAUTH2");
             var socketOptions = ResolveSocketOptions(_smtpOptions.Port, _smtpOptions.EnableSsl);
             var userName = (_smtpOptions.UserName ?? string.Empty).Trim();
             var password = (_smtpOptions.Password ?? string.Empty).Trim();
@@ -217,13 +279,25 @@ public class EmailNotificationService
             await client.AuthenticateAsync(userName, password);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
-            return true;
+            return (true, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not send email to {Email}.", toEmail);
-            return false;
+            return (false, ex.Message);
         }
+    }
+
+    private async Task<bool> SendAsync(
+        string toEmail,
+        string toName,
+        string subject,
+        string htmlBody,
+        string? replyToEmail = null,
+        string? replyToName = null)
+    {
+        var result = await TrySendAsync(toEmail, toName, subject, htmlBody, replyToEmail, replyToName);
+        return result.Sent;
     }
 
     private static SecureSocketOptions ResolveSocketOptions(int port, bool enableSsl)

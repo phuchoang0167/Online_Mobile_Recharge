@@ -244,7 +244,7 @@ public static class DbInitializer
         var admin = new User
         {
             Name = "Quản trị hệ thống",
-            Email = "admin@gmail.com",
+            Email = "phuchoang0167@gmail.com",
             Password = string.Empty,
             Role = "Admin",
             PhoneNumber = "0900000000",

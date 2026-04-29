@@ -12,14 +12,16 @@ using System.Text.Json;
 public class AdminController : Controller
 {
     private readonly MobileRechargeDbContext _context;
+    private readonly EmailNotificationService _emailNotificationService;
     private static readonly JsonSerializerOptions AuditJsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = false
     };
 
-    public AdminController(MobileRechargeDbContext context)
+    public AdminController(MobileRechargeDbContext context, EmailNotificationService emailNotificationService)
     {
         _context = context;
+        _emailNotificationService = emailNotificationService;
     }
 
     [HttpGet]
@@ -384,6 +386,50 @@ public class AdminController : Controller
             .ThenByDescending(x => x.IsActive)
             .ThenBy(x => x.Id)
             .ToList());
+    }
+
+    [HttpGet]
+    public IActionResult SmtpReport()
+    {
+        var smtpOptions = HttpContext.RequestServices
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<Online_Mobile_Recharge.Models.Configuration.SmtpOptions>>()
+            .Value;
+
+        return Json(new
+        {
+            configured = _emailNotificationService.IsConfigured,
+            host = smtpOptions.Host,
+            port = smtpOptions.Port,
+            userName = smtpOptions.UserName,
+            fromEmail = smtpOptions.FromEmail,
+            enableSsl = smtpOptions.EnableSsl
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SmtpProbe()
+    {
+        var result = await _emailNotificationService.ProbeSmtpAsync();
+        return Json(new { ok = result.Ok, stage = result.Stage, error = result.Error });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SmtpTest(string? toEmail)
+    {
+        var target = string.IsNullOrWhiteSpace(toEmail) ? string.Empty : toEmail.Trim();
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            return BadRequest("Missing toEmail");
+        }
+
+        var result = await _emailNotificationService.TrySendAsync(
+            toEmail: target,
+            toName: target,
+            subject: "SMTP test - Online Mobile Recharge",
+            htmlBody: $"<p>SMTP test at {DateTime.Now:dd/MM/yyyy HH:mm}</p>");
+
+        return Json(new { sent = result.Sent, error = result.Error });
     }
 
     public IActionResult AuditLogs(int? id = null, string? q = null, string? entityType = null)
